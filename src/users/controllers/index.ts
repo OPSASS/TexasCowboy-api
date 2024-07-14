@@ -2,6 +2,7 @@ import { NotFoundInterceptor, RoleEnum } from '@app/common'
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpException,
   HttpStatus,
@@ -19,17 +20,17 @@ import { FindAllUserRequest } from '../dto/find.request'
 import { UpdateUserRequest } from '../dto/update.request'
 import { UsersService } from '../services'
 
-@Controller('/users')
+@Controller('/users/')
 export class UserController {
   constructor(private readonly userService: UsersService) {}
 
-  @Post('/')
+  @Post('')
   @UseInterceptors(NotFoundInterceptor)
   async createUser(@Body() request: CreateUserRequest) {
     return this.userService.create(request)
   }
 
-  @Put('/:id')
+  @Put(':id')
   @UseGuards(AuthGuard())
   async updateUser(@Req() req: any, @Param('id') id: string, @Body() request: UpdateUserRequest) {
     if (req.user.role.includes(RoleEnum.ADMIN) || req.user._id.toString() === id) {
@@ -39,14 +40,20 @@ export class UserController {
     }
   }
 
-  @Get('/:id')
+  @Get(':id')
   async getUser(@Param('id') id: string) {
     return this.userService.get(new Types.ObjectId(id))
   }
 
-  @Post('/find')
+  @Post('find')
   @UseInterceptors(NotFoundInterceptor)
   async listUser(@Body() request: FindAllUserRequest) {
     return this.userService.getList(request.filterQuery ? request.filterQuery : {}, request.options)
+  }
+
+  @Delete(':id')
+  @UseGuards(AuthGuard())
+  async destroyUser(@Param('id') id: string, @Body() body: any) {
+    return this.userService.destroy(id, body)
   }
 }

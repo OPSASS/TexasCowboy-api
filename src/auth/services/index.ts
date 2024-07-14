@@ -26,7 +26,7 @@ export class AuthService {
     const tokens = await this.getTokens(user._id.toString())
     await this.updateRefreshToken(user._id.toString(), tokens.refreshToken)
 
-    return user
+    return tokens
   }
 
   /**
@@ -37,11 +37,9 @@ export class AuthService {
    */
   async signIn(request: AuthDto) {
     // Check if user exists
-    const user = await this.usersService.validateUser(request.email, request.password)
+    const user = await this.usersService.validateUser(request.account, request.password)
     const tokens = await this.getTokens(user._id.toString())
-    return await this.updateRefreshToken(user._id.toString(), tokens.refreshToken)
-
-    // return user
+    return { ...(await this.updateRefreshToken(user._id.toString(), tokens.refreshToken)), ...tokens }
   }
 
   /**

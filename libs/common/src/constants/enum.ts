@@ -23,7 +23,7 @@ export enum RoleEnum {
 
 export enum GenderEnum {
   MALE = 'MALE',
-  FAMALE = 'FAMALE',
+  FAMALE = 'FEMALE',
   OTHER = 'OTHER'
 }
 

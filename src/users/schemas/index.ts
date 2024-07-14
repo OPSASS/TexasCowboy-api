@@ -54,8 +54,7 @@ export class User extends AbstractDocument {
   birthday: Date
 
   @Prop({
-    type: mongoose.Schema.Types.String,
-    unique: true
+    type: mongoose.Schema.Types.String
   })
   phoneNumber?: string
 
@@ -91,7 +90,23 @@ export class User extends AbstractDocument {
     type: mongoose.Schema.Types.String
   })
   refreshToken?: string
+
+  @Prop({
+    type: mongoose.Schema.Types.String
+  })
+  walletId?: string
 }
 
 export const UserSchema = SchemaFactory.createForClass(User)
 UserSchema.index({ fullName: 'text', email: 'text', phoneNumber: 'text' })
+UserSchema.virtual('wallet', {
+  ref: 'Wallet',
+  localField: 'walletId',
+  foreignField: '_id',
+  justOne: true,
+  match: { _destroy: false }
+})
+
+UserSchema.pre('findOne', function () {
+  this.populate([{ path: 'wallet', select: 'coin' }])
+})

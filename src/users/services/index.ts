@@ -2,6 +2,7 @@ import { Message, StatusEnum } from '@app/common'
 import { ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common'
 import * as bcrypt from 'bcrypt'
 import { ClientSession } from 'mongoose'
+import { WalletService } from 'src/wallet/services'
 import { CreateUserRequest } from '../dto/create.request'
 import { UpdateUserRequest } from '../dto/update.request'
 import { UserRepository } from '../repositories'
@@ -9,7 +10,10 @@ import { User } from '../schemas'
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly repository: UserRepository) {}
+  constructor(
+    private readonly repository: UserRepository,
+    private readonly walletSevice: WalletService
+  ) {}
 
   /**
    * Create function
@@ -22,8 +26,9 @@ export class UsersService {
       throw new ForbiddenException('Password and Confirm Password must be the same')
 
     const result = await this.repository.create({ ...request, password: await bcrypt.hash(request.password, 12) })
+    const wallet = await this.walletSevice.create({ userId: result._id.toString() })
 
-    return result
+    return await this.update(result._id, { walletId: wallet._id.toString() })
   }
 
   /**
@@ -104,5 +109,23 @@ export class UsersService {
 
     delete user.password
     return user
+  }
+
+  /**
+   * Remove function
+   *
+   * @param id
+   * @returns Document
+   */
+  async destroy(id: string, body: any): Promise<User> {
+    const { password } = body
+
+    const user = await this.repository.get({ _id: id })
+    const passwordIsValid = await bcrypt.compare(password, user.password)
+    if (!passwordIsValid) {
+      throw new UnauthorizedException(Message.INVALID_PASSWORD)
+    }
+    if (user.walletId) await this.walletSevice.destroy(user.walletId)
+    return this.repository.destroy(id)
   }
 }

@@ -1,13 +1,7 @@
 import { GenderEnum, Message, RoleEnum } from '@app/common'
 import { RegExpValidate } from '@app/common/constants/const'
 import { ApiProperty } from '@nestjs/swagger'
-import {
-  IsEmail,
-  IsOptional,
-  IsString,
-  Matches,
-  MinLength,
-} from 'class-validator'
+import { IsEmail, IsOptional, IsString, Matches, MinLength } from 'class-validator'
 import { Match } from '../decorations/match.decoration'
 
 export class UpdateUserRequest {
@@ -15,7 +9,7 @@ export class UpdateUserRequest {
     type: String,
     required: false,
     description: 'ユーザーのフルネーム',
-    example: '山田 太郎',
+    example: '山田 太郎'
   })
   @IsOptional()
   @IsString()
@@ -25,7 +19,7 @@ export class UpdateUserRequest {
     type: String,
     required: false,
     description: '苗字',
-    example: '山田',
+    example: '山田'
   })
   @IsString()
   @IsOptional()
@@ -35,7 +29,7 @@ export class UpdateUserRequest {
     type: String,
     required: false,
     description: 'ファーストネーム',
-    example: '太郎',
+    example: '太郎'
   })
   @IsString()
   @IsOptional()
@@ -47,7 +41,7 @@ export class UpdateUserRequest {
     enum: GenderEnum,
     required: false,
     description: '性別',
-    example: '男',
+    example: '男'
   })
   @IsString()
   @IsOptional()
@@ -57,7 +51,7 @@ export class UpdateUserRequest {
     type: String,
     required: false,
     description: 'ユーザーの電話番号',
-    example: '0901234567',
+    example: '0901234567'
   })
   @IsOptional()
   @IsString()
@@ -67,7 +61,7 @@ export class UpdateUserRequest {
     type: String,
     required: false,
     description: 'ユーザーのメールアドレス',
-    example: 'example_email@gmail.com',
+    example: 'example_email@gmail.com'
   })
   @IsOptional()
   @IsEmail({}, { message: Message.INVALID_EMAIL })
@@ -77,7 +71,7 @@ export class UpdateUserRequest {
     type: String,
     required: false,
     description: 'ユーザーのパスワード',
-    example: 'Zxcv1234!',
+    example: 'Zxcv1234!'
   })
   @IsOptional()
   @MinLength(6)
@@ -88,7 +82,7 @@ export class UpdateUserRequest {
     type: String,
     required: false,
     description: 'ユーザーのパスワード確認',
-    example: 'Zxcv1234!',
+    example: 'Zxcv1234!'
   })
   @Match('password', { message: Message.PASSWORD_NOT_MATCH })
   confirmPassword?: string
@@ -99,7 +93,7 @@ export class UpdateUserRequest {
     description: 'ユーザーの生年月日',
     example: new Date(),
     format: 'date',
-    default: new Date(),
+    default: new Date()
   })
   @IsOptional()
   @IsString()
@@ -109,7 +103,7 @@ export class UpdateUserRequest {
     type: Boolean,
     required: false,
     description: 'アバターのURL',
-    example: 'https://sohanews.sohacdn.com/2016/photo-6-1477717938461.jpg',
+    example: 'https://sohanews.sohacdn.com/2016/photo-6-1477717938461.jpg'
   })
   @IsOptional()
   avatarUrl?: string
@@ -119,20 +113,16 @@ export class UpdateUserRequest {
     required: false,
     enum: RoleEnum,
     description: 'ユーザーの権利 => 0: ユーザー, 1: メンター, 2: 管理者',
-    example: 0,
+    example: 0
   })
   @IsOptional()
   role?: RoleEnum
 
-  @ApiProperty({
-    type: String,
-    required: false,
-  })
-  @IsOptional()
-  @IsString()
-  descriptions?: string
-
   @IsOptional()
   @IsString()
   refreshToken?: string
+
+  @IsOptional()
+  @IsString()
+  walletId?: string
 }
