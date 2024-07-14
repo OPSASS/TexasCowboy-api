@@ -1,16 +1,7 @@
 import { GenderEnum, Message, RoleEnum } from '@app/common'
 import { RegExpValidate } from '@app/common/constants/const'
 import { ApiProperty } from '@nestjs/swagger'
-import {
-  IsDefined,
-  IsEmail,
-  IsNumber,
-  IsOptional,
-  IsString,
-  Matches,
-  MinLength,
-  ValidateIf,
-} from 'class-validator'
+import { IsDefined, IsEmail, IsNumber, IsOptional, IsString, Matches, MinLength, ValidateIf } from 'class-validator'
 import { Match } from '../decorations/match.decoration'
 
 export class CreateUserRequest {
@@ -18,7 +9,7 @@ export class CreateUserRequest {
     type: String,
     required: true,
     description: 'ユーザーのフルネーム',
-    example: '山田 太郎',
+    example: '山田 太郎'
   })
   @IsString()
   @IsDefined()
@@ -28,7 +19,7 @@ export class CreateUserRequest {
     type: String,
     required: true,
     description: '苗字',
-    example: '山田',
+    example: '山田'
   })
   @IsString()
   @IsDefined()
@@ -38,7 +29,7 @@ export class CreateUserRequest {
     type: String,
     required: true,
     description: 'ファーストネーム',
-    example: '太郎',
+    example: '太郎'
   })
   @IsString()
   @IsDefined()
@@ -50,7 +41,7 @@ export class CreateUserRequest {
     enum: GenderEnum,
     required: true,
     description: '性別',
-    example: '男',
+    example: '男'
   })
   @IsString()
   @IsDefined()
@@ -59,19 +50,18 @@ export class CreateUserRequest {
 
   @ApiProperty({
     type: String,
-    required: true,
     description: 'ユーザーの電話番号',
-    example: '0901234567',
+    example: '0901234567'
   })
   @IsString()
-  @IsDefined()
+  @IsOptional()
   phoneNumber?: string
 
   @ApiProperty({
     type: String,
     required: true,
     description: 'ユーザーのメールアドレス',
-    example: 'example_email@gmail.com',
+    example: 'example_email@gmail.com'
   })
   @IsEmail({}, { message: Message.INVALID_EMAIL })
   @IsDefined()
@@ -81,7 +71,7 @@ export class CreateUserRequest {
     type: String,
     required: true,
     description: 'ユーザーのパスワード',
-    example: 'Zxcv1234!',
+    example: 'Zxcv1234!'
   })
   @IsDefined()
   @MinLength(6)
@@ -92,7 +82,7 @@ export class CreateUserRequest {
     type: String,
     required: true,
     description: 'ユーザーのパスワード確認',
-    example: 'Zxcv1234!',
+    example: 'Zxcv1234!'
   })
   @Match('password', { message: Message.PASSWORD_NOT_MATCH })
   confirmPassword: string
@@ -103,7 +93,7 @@ export class CreateUserRequest {
     description: 'ユーザーの生年月日',
     example: new Date(),
     format: 'date',
-    default: new Date(),
+    default: new Date()
   })
   @IsOptional()
   @IsString()
@@ -115,7 +105,7 @@ export class CreateUserRequest {
     default: RoleEnum.USER,
     enum: RoleEnum,
     description: 'ユーザーの権利 => 0: ユーザー, 1: メンター, 2: 管理者',
-    example: RoleEnum.USER,
+    example: RoleEnum.USER
   })
   @IsNumber()
   @IsOptional()
@@ -125,7 +115,7 @@ export class CreateUserRequest {
     type: Boolean,
     required: false,
     description: 'アバターのURL',
-    example: 'https://sohanews.sohacdn.com/2016/photo-6-1477717938461.jpg',
+    example: 'https://sohanews.sohacdn.com/2016/photo-6-1477717938461.jpg'
   })
   @ValidateIf((ob) => ob.isMentor)
   @IsOptional()

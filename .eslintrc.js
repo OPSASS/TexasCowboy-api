@@ -5,12 +5,12 @@ module.exports = {
     project: 'tsconfig.json',
     tsconfigRootDir: __dirname,
     sourceType: 'module',
-
     ecmaVersion: 'latest'
   },
-  plugins: ['@typescript-eslint/eslint-plugin'],
+  plugins: ['@typescript-eslint/eslint-plugin', 'flowtype'],
   extends: [
     'plugin:@typescript-eslint/recommended',
+    'plugin:flowtype/recommended',
     'plugin:prettier/recommended',
     'eslint-config-prettier',
     'prettier'
@@ -32,7 +32,7 @@ module.exports = {
       {
         arrowParens: 'always',
         endOfLine: 'auto',
-        parser: 'flow',
+        parser: 'babel-eslint',
         printWidth: 120,
         semi: false,
         singleQuote: true,
