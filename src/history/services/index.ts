@@ -1,13 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { ClientSession } from 'mongoose'
-import { CreateWalletRequest } from '../dto/create.request'
-import { UpdateWalletRequest } from '../dto/update.request'
-import { WalletRepository } from '../repositories'
-import { Wallet } from '../schemas'
+import { CreateHistoryRequest } from '../dto/create.request'
+import { UpdateHistoryRequest } from '../dto/update.request'
+import { HistoryRepository } from '../repositories'
+import { History } from '../schemas'
 
 @Injectable()
-export class WalletService {
-  constructor(private readonly repository: WalletRepository) {}
+export class HistoryService {
+  constructor(private readonly repository: HistoryRepository) {}
 
   /**
    * Create function
@@ -15,7 +15,7 @@ export class WalletService {
    * @param request
    * @returns Created course information
    */
-  async create(request: CreateWalletRequest): Promise<Wallet> {
+  async create(request: CreateHistoryRequest): Promise<History> {
     return await this.repository.create(request)
   }
 
@@ -25,18 +25,8 @@ export class WalletService {
    * @param id
    * @returns Document
    */
-  async get(id: Partial<Wallet>): Promise<Wallet> {
+  async get(id: Partial<History>): Promise<History> {
     return await this.repository.get({ _id: id })
-  }
-
-  /**
-   * Get detail function
-   *
-   * @param userId
-   * @returns Document
-   */
-  async getWalletByUserId(userId: Partial<Wallet>): Promise<Wallet> {
-    return await this.repository.get({ userId })
   }
 
   /**
@@ -60,7 +50,7 @@ export class WalletService {
    * @param request
    * @returns Created document
    */
-  async update(id: Partial<Wallet>, request: UpdateWalletRequest): Promise<Wallet> {
+  async update(id: Partial<History>, request: UpdateHistoryRequest): Promise<History> {
     const session: ClientSession = await this.repository.startTransaction()
     try {
       const document = await this.repository.findByIdAndUpdate(id, request)
@@ -69,34 +59,19 @@ export class WalletService {
       return document
     } catch (error) {
       await session.abortTransaction()
-      throw new NotFoundException('Không tìm thấy ví')
+      throw new NotFoundException('Không tìm thấy lịch sử')
     } finally {
       session.endSession()
     }
   }
 
-  async addCoin(request: UpdateWalletRequest): Promise<Wallet> {
-    const { userId, coin } = request
-    try {
-      const wallet = await this.repository.get({ userId })
-
-      if (!wallet) {
-        throw new NotFoundException('Không tìm thấy ví')
-      }
-      wallet.coin += coin
-
-      return await this.repository.findByIdAndUpdate(wallet._id, wallet)
-    } catch (error) {
-      throw new NotFoundException('Không tìm thấy ví')
-    }
-  }
   /**
    * Remove function
    *
    * @param id
    * @returns Document
    */
-  async destroy(id: string): Promise<Wallet> {
+  async destroy(id: string): Promise<History> {
     return await this.repository.destroy(id)
   }
 }
