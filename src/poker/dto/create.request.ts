@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { IsArray, IsDefined } from 'class-validator'
+import { IsArray, IsDefined, IsOptional } from 'class-validator'
 
 export class CreatePokerRequest {
   @ApiProperty({
@@ -9,4 +9,11 @@ export class CreatePokerRequest {
   @IsArray()
   @IsDefined()
   dealer: number[]
+
+  @ApiProperty({
+    type: Array
+  })
+  @IsArray()
+  @IsOptional()
+  pack?: number[]
 }

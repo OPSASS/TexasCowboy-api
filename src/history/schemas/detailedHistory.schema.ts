@@ -14,4 +14,4 @@ export class DetailedHistory {
   coin: number
 }
 
-export const DetailedAssessmentsSchema = SchemaFactory.createForClass(DetailedHistory)
+export const DetailedHistorySchema = SchemaFactory.createForClass(DetailedHistory)

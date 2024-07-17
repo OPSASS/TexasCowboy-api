@@ -175,6 +175,21 @@ export abstract class AbstractRepository<TDocument extends AbstractDocument> {
     return result[0]
   }
 
+  async findPrev() {
+    try {
+      const previousRecord = await this.model.find().sort({ createdAt: -1 }).limit(2).exec()
+      if (!previousRecord) {
+        throw new Error('Data not found')
+      }
+      if (previousRecord.length > 1) return previousRecord[1]
+      else return previousRecord[0]
+    } catch (error) {
+      console.error(error)
+
+      return null
+    }
+  }
+
   async startTransaction() {
     const session = await this.connection.startSession()
     session.startTransaction()

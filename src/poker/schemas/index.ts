@@ -1,6 +1,8 @@
 import { AbstractDocument } from '@app/common'
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
 import mongoose from 'mongoose'
+import { GameHistory } from './gameHistory.schema'
+import { Result } from './result.schema'
 
 @Schema({
   versionKey: false,
@@ -31,10 +33,18 @@ export class Poker extends AbstractDocument {
   })
   player2?: number[]
 
+  @Prop()
+  result?: Result
+
+  @Prop()
+  gameHistory?: GameHistory
+
   @Prop({
-    type: mongoose.Schema.Types.Array
+    type: mongoose.Schema.Types.Array,
+    min: 1,
+    max: 52
   })
-  win?: string[]
+  pack?: number[]
 }
 
 export const PokerSchema = SchemaFactory.createForClass(Poker)
