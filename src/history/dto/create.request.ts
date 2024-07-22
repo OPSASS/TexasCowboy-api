@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { IsArray, IsDefined, IsNumber, IsOptional, IsString } from 'class-validator'
+import { IsArray, IsNumber, IsObject, IsOptional, IsString } from 'class-validator'
 import { DetailedHistory } from '../schemas/detailedHistory.schema'
+import { GameHistory } from '../schemas/gameHistory.schema'
 
 export class CreateHistoryRequest {
   @ApiProperty({
@@ -9,8 +10,8 @@ export class CreateHistoryRequest {
     description: 'ユーザーのフルネーム'
   })
   @IsString()
-  @IsDefined()
-  userId: string
+  @IsOptional()
+  userId?: string
 
   @ApiProperty({
     type: String,
@@ -18,8 +19,8 @@ export class CreateHistoryRequest {
     description: 'ユーザーのフルネーム'
   })
   @IsString()
-  @IsDefined()
-  gameId: string
+  @IsOptional()
+  gameId?: string
 
   @ApiProperty({
     type: Number,
@@ -28,10 +29,18 @@ export class CreateHistoryRequest {
     example: '山田'
   })
   @IsNumber()
-  @IsDefined()
-  totalCoin: number
+  @IsOptional()
+  totalCoin?: number
 
   @IsArray()
   @IsOptional()
   detailedHistory?: DetailedHistory[]
+
+  @IsObject()
+  @IsOptional()
+  gameHistory?: GameHistory
+
+  @IsString()
+  @IsOptional()
+  gameModal?: string
 }

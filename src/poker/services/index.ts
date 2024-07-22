@@ -1,3 +1,4 @@
+import { ModalEnum } from '@app/common'
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { History } from 'src/history/schemas'
 import { HistoryService } from 'src/history/services'
@@ -16,27 +17,34 @@ export class PokerService {
   /**
    * Create function
    *
-   * @returns Created course information
+   * @returns Created poker information
    */
   async create(): Promise<Poker> {
     let initCard = Array.from({ length: 52 }, (_, k) => k + 1)
     initCard = initCard.sort(() => Math.random() - 0.5)
-    let initPlayerCards = [0, 0]
-    const turn1 = await this.getRandomNumbersFromArray(initCard, 1)
+    let initPlayerCards = [0, 0, 0, 0, 0]
+    const player1 = await this.getRandomNumbersFromArray(initCard, 1)
+    const player2 = await this.getRandomNumbersFromArray(player1.arr, 1)
 
-    return await this.repository.create({
-      dealer: turn1.result.concat(initPlayerCards, initPlayerCards),
-      player1: initPlayerCards,
-      player2: initPlayerCards,
-      pack: initCard
+    const history = await this.historySevice.create({ gameModal: ModalEnum.TEXAS_COWBOY })
+
+    const result = await this.repository.create({
+      dealer: initPlayerCards,
+      player1: player1.result.concat(0),
+      player2: player2.result.concat(0),
+      pack: player2.arr,
+      historyId: history._id.toString()
     })
+
+    await this.historySevice.update(history._id, { gameId: result._id.toString() })
+    return result
   }
 
   /**
-   * Create function
+   * Create bet function
    *
    * @param request
-   * @returns Created course information
+   * @returns Created bet information
    */
   async bets(request): Promise<History> {
     const { userId, gameId, detailedHistory } = request
@@ -61,97 +69,102 @@ export class PokerService {
    * Update function
    *
    * @param request
-   * @returns Created document
+   * @returns Update document
    */
   async update(id: Partial<Poker>): Promise<Poker> {
-    let initCards = []
+    let gameHistory = {}
     try {
       const turnDetail = await this.repository.get({ _id: id })
 
-      const dealer = await this.getRandomNumbersFromArray(turnDetail.pack, 4)
-      initCards = dealer.arr
-
       if (turnDetail.dealer[2] !== 0) return turnDetail
 
-      let dealerCards = await this.updateArray(turnDetail.dealer, dealer.result)
+      const player1 = await this.getRandomNumbersFromArray(turnDetail.pack, 1)
 
-      const play1 = await this.getRandomNumbersFromArray(initCards, 2)
+      const player2 = await this.getRandomNumbersFromArray(player1.arr, 1)
 
-      const play2 = await this.getRandomNumbersFromArray(play1.arr, 2)
+      const dealer = await this.getRandomNumbersFromArray(player2.arr, 5)
 
-      const result = await this.gamePlay(dealerCards, [play1.result, play2.result])
-      const oldTurn = await this.repository.findPrev()
-      let gameHistory = undefined
+      const player1Cards = await this.updateArray(turnDetail.player1, player1.result)
 
-      if (oldTurn?.gameHistory?.playerHistory?.length) {
-        gameHistory = {
-          playerHistory: await this.modifyArray(
-            oldTurn.gameHistory.playerHistory,
-            result.gameHistory.playerHistory,
-            50
-          ),
-          highCardOrOnePair: await this.modifyArray(
-            oldTurn.gameHistory.highCardOrOnePair,
-            result.gameHistory.highCardOrOnePair,
-            7
-          ),
-          twoPair: await this.modifyArray(oldTurn.gameHistory.twoPair, result.gameHistory.twoPair, 7),
-          threeOfAKindOrStraightOrFlush: await this.modifyArray(
-            oldTurn.gameHistory.fourOfAKindOrStraightFlushOrRoyalFlush,
-            result.gameHistory.fourOfAKindOrStraightFlushOrRoyalFlush,
-            7
-          ),
-          fullHouse: await this.modifyArray(oldTurn.gameHistory.fullHouse, result.gameHistory.fullHouse, 7),
-          fourOfAKindOrStraightFlushOrRoyalFlush: await this.modifyArray(
-            oldTurn.gameHistory.fourOfAKindOrStraightFlushOrRoyalFlush,
-            result.gameHistory.fourOfAKindOrStraightFlushOrRoyalFlush,
-            20
-          ),
-          isAA: await this.modifyArray(oldTurn.gameHistory.isAA, result.gameHistory.isAA, 15),
-          isHasPair: await this.modifyArray(oldTurn.gameHistory.isHasPair, result.gameHistory.isHasPair, 15),
-          isFlush: await this.modifyArray(oldTurn.gameHistory.isFlush, result.gameHistory.isFlush, 15)
-        }
-      } else {
-        gameHistory = result.gameHistory
+      const player2Cards = await this.updateArray(turnDetail.player2, player2.result)
+
+      const result = await this.gamePlay(dealer.result, [player1Cards, player2Cards])
+      const oldTurn = await this.historySevice.findPrevData({ _destroy: false, gameModal: ModalEnum.TEXAS_COWBOY })
+
+      gameHistory = {
+        playerHistory: await this.modifyArray(oldTurn?.gameHistory?.playerHistory, result.playerHistory, 50),
+        result: result.result,
+        red: await this.modifyArray(oldTurn?.gameHistory?.red, result.red, 12),
+        draw: await this.modifyArray(oldTurn?.gameHistory?.draw, result.draw, 12),
+        blue: await this.modifyArray(oldTurn?.gameHistory?.blue, result.blue, 12),
+        highCardOrOnePair: await this.modifyArray(
+          oldTurn?.gameHistory?.highCardOrOnePair,
+          result.highCardOrOnePair,
+          12
+        ),
+        twoPair: await this.modifyArray(oldTurn?.gameHistory?.twoPair, result.twoPair, 12),
+        threeOfAKindOrStraightOrFlush: await this.modifyArray(
+          oldTurn?.gameHistory?.threeOfAKindOrStraightOrFlush,
+          result.threeOfAKindOrStraightOrFlush,
+          12
+        ),
+        fullHouse: await this.modifyArray(oldTurn?.gameHistory?.fullHouse, result.fullHouse, 12),
+        fourOfAKindOrStraightFlushOrRoyalFlush: await this.modifyArray(
+          oldTurn?.gameHistory?.fourOfAKindOrStraightFlushOrRoyalFlush,
+          result.fourOfAKindOrStraightFlushOrRoyalFlush,
+          25
+        ),
+        isAA: await this.modifyArray(oldTurn?.gameHistory?.isAA, result.isAA, 12),
+        isHasPair: await this.modifyArray(oldTurn?.gameHistory?.isHasPair, result.isHasPair, 12),
+        isFlush: await this.modifyArray(oldTurn?.gameHistory?.isFlush, result.isFlush, 12),
+        countRed: await this.countingHistory(oldTurn?.gameHistory?.countRed, result?.red),
+        countDraw: await this.countingHistory(oldTurn?.gameHistory?.countDraw, result?.draw),
+        countBlue: await this.countingHistory(oldTurn?.gameHistory?.countBlue, result?.blue),
+        countHighCardOrOnePair: await this.countingHistory(
+          oldTurn?.gameHistory?.countHighCardOrOnePair,
+          result?.highCardOrOnePair
+        ),
+        countTwoPair: await this.countingHistory(oldTurn?.gameHistory?.countTwoPair, result?.twoPair),
+        countThreeOfAKindOrStraightOrFlush: await this.countingHistory(
+          oldTurn?.gameHistory?.countThreeOfAKindOrStraightOrFlush,
+          result?.threeOfAKindOrStraightOrFlush
+        ),
+        countFullHouse: await this.countingHistory(oldTurn?.gameHistory?.countFullHouse, result?.fullHouse),
+        countFourOfAKindOrStraightFlushOrRoyalFlush: await this.countingHistory(
+          oldTurn?.gameHistory?.countFourOfAKindOrStraightFlushOrRoyalFlush,
+          result?.fourOfAKindOrStraightFlushOrRoyalFlush
+        ),
+        countIsAA: await this.countingHistory(oldTurn?.gameHistory?.countIsAA, result?.isAA),
+        countIsHasPair: await this.countingHistory(oldTurn?.gameHistory?.countIsHasPair, result?.isHasPair),
+        countIsFlush: await this.countingHistory(oldTurn?.gameHistory?.countIsFlush, result?.isFlush)
       }
 
       const body = {
-        dealer: dealerCards,
-        player1: play1.result,
-        player2: play2.result,
-        pack: [],
-        result: result.result,
-        gameHistory
+        dealer: dealer.result,
+        player1: player1Cards,
+        player2: player2Cards,
+        pack: []
       }
 
+      await this.historySevice.update(turnDetail.historyId, { gameHistory })
       return await this.repository.findByIdAndUpdate(id, body)
     } catch (error) {
       throw new NotFoundException('Không tìm thấy phiên chơi')
     }
   }
 
-  async countingHistory(oldNum: number, check: boolean) {
-    if (!check) {
-      return oldNum + 1
-    } else return 0
-  }
-
   async gamePlay(dealerCards, players) {
-    const getCardValue = (card) => {
-      return ((card - 1) % 13) + 2
-    }
+    const getCardValue = (card) => ((card - 1) % 13) + 2
 
     const getCardSuit = (card) => {
       const suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades']
       return suits[Math.floor((card - 1) / 13)]
     }
 
-    const getCard = (card) => {
-      return {
-        value: getCardValue(card),
-        suit: getCardSuit(card)
-      }
-    }
+    const getCard = (card) => ({
+      value: getCardValue(card),
+      suit: getCardSuit(card)
+    })
 
     const rankToString = (rank) => {
       const ranks = [
@@ -185,7 +198,7 @@ export class PokerService {
       const uniqueSuits = [...new Set(suits)]
 
       const isFlush = uniqueSuits.length === 1
-      const isStraight = uniqueValues.length === 5 && values[4] - values[0] === 4
+      const isStraight = uniqueValues.length === 5 && (values[4] - values[0] === 4 || values.join('') === '234514')
       const valueCounts = values.reduce((acc, value) => {
         acc[value] = (acc[value] || 0) + 1
         return acc
@@ -195,60 +208,18 @@ export class PokerService {
       const highestCard = values[4]
       const highestCardSuit = suits[values.indexOf(highestCard)]
 
-      // Royal Flush
       if (isStraight && isFlush && values[0] === 10)
         return { rank: 9, highCard: highestCard, highCardSuit: highestCardSuit }
-
-      // Straight Flush
       if (isStraight && isFlush) return { rank: 8, highCard: highestCard, highCardSuit: highestCardSuit }
-
-      // Four of a Kind
-      if (counts[0] === 4)
-        return {
-          rank: 7,
-          highCard: getKeyByValue(valueCounts, 4),
-          highCardSuit: suits[values.indexOf(getKeyByValue(valueCounts, 4))]
-        }
-
-      // Full House
+      if (counts[0] === 4) return { rank: 7, highCard: getKeyByValue(valueCounts, 4), highCardSuit: highestCardSuit }
       if (counts[0] === 3 && counts[1] === 2)
-        return {
-          rank: 6,
-          highCard: getKeyByValue(valueCounts, 3),
-          highCardSuit: suits[values.indexOf(getKeyByValue(valueCounts, 3))]
-        }
-
-      // Flush
+        return { rank: 6, highCard: getKeyByValue(valueCounts, 3), highCardSuit: highestCardSuit }
       if (isFlush) return { rank: 5, highCard: highestCard, highCardSuit: highestCardSuit }
-
-      // Straight
       if (isStraight) return { rank: 4, highCard: highestCard, highCardSuit: highestCardSuit }
-
-      // Three of a Kind
-      if (counts[0] === 3)
-        return {
-          rank: 3,
-          highCard: getKeyByValue(valueCounts, 3),
-          highCardSuit: suits[values.indexOf(getKeyByValue(valueCounts, 3))]
-        }
-
-      // Two Pair
+      if (counts[0] === 3) return { rank: 3, highCard: getKeyByValue(valueCounts, 3), highCardSuit: highestCardSuit }
       if (counts[0] === 2 && counts[1] === 2)
-        return {
-          rank: 2,
-          highCard: getKeyByValue(valueCounts, 2, true),
-          highCardSuit: suits[values.indexOf(getKeyByValue(valueCounts, 2, true))]
-        }
-
-      // One Pair
-      if (counts[0] === 2)
-        return {
-          rank: 1,
-          highCard: getKeyByValue(valueCounts, 2),
-          highCardSuit: suits[values.indexOf(getKeyByValue(valueCounts, 2))]
-        }
-
-      // High Card
+        return { rank: 2, highCard: getKeyByValue(valueCounts, 2, true), highCardSuit: highestCardSuit }
+      if (counts[0] === 2) return { rank: 1, highCard: getKeyByValue(valueCounts, 2), highCardSuit: highestCardSuit }
       return { rank: 0, highCard: highestCard, highCardSuit: highestCardSuit }
     }
 
@@ -289,6 +260,7 @@ export class PokerService {
         { rank: -1, highCard: -1, highCardSuit: '' }
       )
     }
+
     const hasPair = (hand) => {
       const values = hand.map((card) => getCardValue(card))
       const valueCounts = values.reduce((acc, value) => {
@@ -297,6 +269,7 @@ export class PokerService {
       }, {})
       return Object.values(valueCounts).some((count) => count === 2)
     }
+
     const checkPairs = (players) => {
       let isHasPair = false
       let AA = false
@@ -308,12 +281,7 @@ export class PokerService {
           return acc
         }, {})
         if (hasPair(hand)) isHasPair = true
-        if (Object.values(valueCounts).some((count) => count === 2)) {
-          if (valueCounts[14] === 2) {
-            // Ace's value is 14
-            AA = true
-          }
-        }
+        if (valueCounts[14] === 2) AA = true
       })
 
       return { isHasPair, isAA: AA }
@@ -331,16 +299,12 @@ export class PokerService {
         .map((card) => card.value)
         .sort((a, b) => a - b)
       for (let i = 1; i < values.length; i++) {
-        if (values[i] !== values[i - 1] + 1) {
-          return false
-        }
+        if (values[i] !== values[i - 1] + 1) return false
       }
       return true
     }
 
-    const hasStraightFlush = (hand) => {
-      return hasFlush(hand) && hasStraight(hand)
-    }
+    const hasStraightFlush = (hand) => hasFlush(hand) && hasStraight(hand)
 
     const checkHands = (dealerCards, players) => {
       const allHands = [dealerCards, ...players]
@@ -354,12 +318,8 @@ export class PokerService {
         if (hasStraight(hand)) isStraight = true
         if (hasStraightFlush(hand)) isStraightFlush = true
       })
-      return {
-        ...pairInGame,
-        isFlush,
-        isStraight,
-        isStraightFlush
-      }
+
+      return { ...pairInGame, isFlush, isStraight, isStraightFlush }
     }
 
     const getWinner = (dealerCards, players) => {
@@ -390,34 +350,39 @@ export class PokerService {
         }
       })
 
-      return {
-        anyPlayers,
-        players: results.map((result, index) => {
-          if (index === winner) {
-            return { ...result, result: 'win' }
-          } else {
-            return { ...result, result: 'lose' }
-          }
-        })
-      }
+      let playersResult = results.map((result, index) => {
+        if (winner === -1) {
+          return { ...result, result: 'draw' }
+        } else if (index === winner) {
+          return { ...result, result: 'win' }
+        } else {
+          return { ...result, result: 'lose' }
+        }
+      })
+
+      return { anyPlayers, players: playersResult }
     }
 
     const result = getWinner(dealerCards, players)
-
-    const playerHistory = result.players.filter((player) => player.result === 'win')
-    const highCardOrOnePair = result.players.some((p) => p.rank === 0 || p.rank === 1)
-    const twoPair = result.players.some((p) => p.rank === 2)
-    const threeOfAKindOrStraightOrFlush = result.players.some((p) => p.rank === 3 || p.rank === 4 || p.rank === 5)
-    const fullHouse = result.players.some((p) => p.rank === 6)
-    const fourOfAKindOrStraightFlushOrRoyalFlush = result.players.some(
-      (p) => p.rank === 7 || p.rank === 8 || p.rank === 9
-    )
-
-    const isAA = result.anyPlayers.isAA
+    const data = result.players
+    const red = data.some((p) => p.playerIndex === 1 && p.result === 'win')
+    const draw = data.every((p) => p.result === 'draw')
+    const blue = data.some((p) => p.playerIndex === 0 && p.result === 'win')
+    const highCardOrOnePair = data.some((p) => (p.rank === 0 || p.rank === 1) && p.result === 'win')
+    const twoPair = data.some((p) => p.rank === 2)
+    const threeOfAKindOrStraightOrFlush = data.some((p) => p.rank === 3 || p.rank === 4 || p.rank === 5)
+    const fullHouse = data.some((p) => p.rank === 6)
+    const fourOfAKindOrStraightFlushOrRoyalFlush = data.some((p) => p.rank === 7 || p.rank === 8 || p.rank === 9)
     const isHasPair = result.anyPlayers.isHasPair
-    const isFlush = result.anyPlayers.isFlush
+    const isAA = result.anyPlayers.isAA
+    const isFlush = result.anyPlayers.isFlush || result.anyPlayers.isStraight || result.anyPlayers.isStraightFlush
+
     const gameHistory = {
-      playerHistory: playerHistory[0],
+      playerHistory: data.filter((p) => p.result === 'win'),
+      result: result.players,
+      red,
+      draw,
+      blue,
       highCardOrOnePair,
       twoPair,
       threeOfAKindOrStraightOrFlush,
@@ -428,15 +393,26 @@ export class PokerService {
       isFlush
     }
 
-    return { result, gameHistory }
+    return gameHistory
   }
 
-  async modifyArray(oldArr, newData, limit) {
-    if (!Array.isArray(oldArr) || typeof newData === 'undefined' || typeof limit !== 'number' || limit <= 0) {
+  /**
+   * modifyArray function
+   *
+   * @param oldArr
+   * @param newData
+   * @param limit
+   * @returns new array
+   */
+  async modifyArray(oldArr: any, newData: any, limit: number) {
+    let newArr = oldArr
+
+    if (typeof newData === 'undefined' || typeof limit !== 'number' || limit <= 0) {
       return null
     }
-    if (oldArr.length < limit) return oldArr.concat(newData)
-    else return oldArr.concat(newData).slice(1, limit + 1)
+    if (!newArr) newArr = []
+    if (newArr.length < limit) return newArr.concat(newData)
+    else return newArr.concat(newData).slice(1, limit + 1)
   }
 
   async updateArray(initArray, newArray) {
@@ -454,9 +430,16 @@ export class PokerService {
     return initArray
   }
 
+  /**
+   * getRandomNumbersFromArray function
+   *
+   * @param arr
+   * @param num
+   * @returns Number
+   */
   async getRandomNumbersFromArray(arr: number[], num: number) {
     if (num > arr.length) {
-      throw new Error('Số lượng số cần lấy lớn hơn độ dài của mảng')
+      throw new Error('The number of numbers needed is greater than the length of the array')
     }
 
     const result = []
@@ -476,10 +459,25 @@ export class PokerService {
   }
 
   /**
+   * couting function
+   *
+   * @param oldNum
+   * @param check
+   * @returns Couting data
+   */
+  async countingHistory(oldNum: number, check: boolean) {
+    let newNum = oldNum
+    if (!oldNum) newNum = 0
+    if (!check) {
+      return newNum + 1
+    }
+    return 0
+  }
+  /**
    * Rollback function
    *
    * @param request
-   * @returns Created course information
+   * @returns Rollback coin
    */
   async rollback(request): Promise<History> {
     const { userId, gameId, totalCoin, detailedHistory } = request

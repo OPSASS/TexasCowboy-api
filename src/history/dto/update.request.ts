@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { IsArray, IsDefined, IsNumber, IsOptional, IsString } from 'class-validator'
+import { IsArray, IsDefined, IsNumber, IsObject, IsOptional, IsString } from 'class-validator'
 import { DetailedHistory } from '../schemas/detailedHistory.schema'
+import { GameHistory } from '../schemas/gameHistory.schema'
 
 export class UpdateHistoryRequest {
   @ApiProperty({
@@ -11,7 +12,7 @@ export class UpdateHistoryRequest {
   })
   @IsString()
   @IsOptional()
-  userId: string
+  userId?: string
 
   @ApiProperty({
     type: Number,
@@ -21,9 +22,21 @@ export class UpdateHistoryRequest {
   })
   @IsNumber()
   @IsDefined()
-  totalCoin: number
+  totalCoin?: number
 
   @IsArray()
   @IsOptional()
   detailedHistory?: DetailedHistory[]
+
+  @IsString()
+  @IsOptional()
+  gameModal?: string
+
+  @IsString()
+  @IsOptional()
+  gameId?: string
+
+  @IsObject()
+  @IsOptional()
+  gameHistory?: GameHistory
 }

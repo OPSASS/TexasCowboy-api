@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
-import { ClientSession } from 'mongoose'
 import { CreateHistoryRequest } from '../dto/create.request'
 import { UpdateHistoryRequest } from '../dto/update.request'
 import { HistoryRepository } from '../repositories'
@@ -51,17 +50,12 @@ export class HistoryService {
    * @returns Created document
    */
   async update(id: Partial<History>, request: UpdateHistoryRequest): Promise<History> {
-    const session: ClientSession = await this.repository.startTransaction()
     try {
       const document = await this.repository.findByIdAndUpdate(id, request)
-      await session.commitTransaction()
 
       return document
     } catch (error) {
-      await session.abortTransaction()
       throw new NotFoundException('Không tìm thấy lịch sử')
-    } finally {
-      session.endSession()
     }
   }
 
@@ -73,5 +67,15 @@ export class HistoryService {
    */
   async destroy(id: string): Promise<History> {
     return await this.repository.destroy(id)
+  }
+
+  /**
+   * FindPrevData function
+   *
+   * @param request
+   * @returns FindPrevData history information
+   */
+  async findPrevData(request: any): Promise<History> {
+    return await this.repository.findPrev(request)
   }
 }

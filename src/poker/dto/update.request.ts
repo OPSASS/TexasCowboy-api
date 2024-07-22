@@ -1,7 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { IsArray, IsObject, IsOptional } from 'class-validator'
-import { GameHistory } from '../schemas/gameHistory.schema'
-import { Result } from '../schemas/result.schema'
+import { IsArray, IsOptional } from 'class-validator'
 
 export class UpdatePokerRequest {
   @ApiProperty({
@@ -27,18 +25,6 @@ export class UpdatePokerRequest {
   @IsArray()
   @IsOptional()
   player2?: number[]
-
-  @ApiProperty({
-    type: Array,
-    required: true
-  })
-  @IsObject()
-  @IsOptional()
-  result?: Result
-
-  @IsObject()
-  @IsOptional()
-  gameHistory?: GameHistory
 
   @ApiProperty({
     type: Array

@@ -1,6 +1,16 @@
-import { IsOptional } from 'class-validator'
+import { ApiProperty } from '@nestjs/swagger'
+import { IsOptional, IsString } from 'class-validator'
 
-class FilterQuery {}
+class FilterQuery {
+  @ApiProperty({
+    type: String,
+    required: true,
+    description: 'ユーザーのフルネーム'
+  })
+  @IsString()
+  @IsOptional()
+  historyId: string
+}
 
 export class FindAllPokerRequest {
   @IsOptional()

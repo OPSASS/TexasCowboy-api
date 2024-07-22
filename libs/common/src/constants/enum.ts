@@ -17,8 +17,14 @@ export enum VerifyStatusEnum {
 
 export enum RoleEnum {
   USER = 0,
-  MENTOR = 1,
-  ADMIN = 2
+  ADMIN = 1
+}
+
+export enum ModalEnum {
+  TEXAS_COWBOY = 'TEXAS_COWBOY',
+  BUSINESS_AND_STRATEGY = 'BUSINESS_AND_STRATEGY',
+  BET = 'BET',
+  PAYMENT = 'PAYMENT'
 }
 
 export enum GenderEnum {
@@ -37,25 +43,7 @@ export enum PermissionEnum {
 
 export enum MenuEnum {
   HOME = 'HOME',
-
   USER = 'USER'
-}
-
-export enum EnrollEnum {
-  MENTOR = 'MENTOR',
-  STUDENT = 'STUDENT'
-}
-
-export enum ModelEnum {
-  LESSON = 'LESSON',
-  TOPIC = 'TOPIC',
-  COURSE = 'COURSE',
-  TEST = 'TEST',
-  QUIZ = 'QUIZ',
-  DOCUMENT = 'DOCUMENT',
-  QUESTION = 'QUESTION',
-  ANSWER = 'ANSWER',
-  MENTOR = 'MENTOR'
 }
 
 export enum Action {
@@ -64,12 +52,6 @@ export enum Action {
   READ = 'read',
   UPDATE = 'update',
   DELETE = 'delete'
-}
-
-export enum TenancyRegisterEnum {
-  PENDING = 'PENDING',
-  RUNNING = 'RUNNING',
-  DISABLE = 'DISABLE'
 }
 
 export enum PaymentEnum {

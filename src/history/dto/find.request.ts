@@ -9,7 +9,7 @@ class FilterQuery {
   })
   @IsString()
   @IsOptional()
-  userId: string
+  userId?: string
 
   @ApiProperty({
     type: String,
@@ -18,7 +18,11 @@ class FilterQuery {
   })
   @IsString()
   @IsOptional()
-  gameId: string
+  gameId?: string
+
+  @IsString()
+  @IsOptional()
+  gameModal?: string
 }
 
 export class FindAllHistoryRequest {
