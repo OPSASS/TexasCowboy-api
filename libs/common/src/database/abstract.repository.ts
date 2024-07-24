@@ -1,5 +1,14 @@
 import { Logger, NotFoundException } from '@nestjs/common'
-import { Connection, FilterQuery, PaginateModel, QueryOptions, SaveOptions, Types, UpdateQuery } from 'mongoose'
+import {
+  Connection,
+  FilterQuery,
+  PaginateModel,
+  PaginateOptions,
+  QueryOptions,
+  SaveOptions,
+  Types,
+  UpdateQuery
+} from 'mongoose'
 import * as paginate from 'mongoose-paginate-v2'
 import { AbstractDocument } from './abstract.schema'
 
@@ -100,7 +109,7 @@ export abstract class AbstractRepository<TDocument extends AbstractDocument> {
     return this.model.find({ _destroy: false, ...filterQuery }, {}, { ...options, lean: true })
   }
 
-  async findAll(filterQuery: FilterQuery<TDocument | any>, options) {
+  async findAll(filterQuery: FilterQuery<TDocument | any>, options: PaginateOptions) {
     const sort = options?.sort ? options.sort : { name: 1 }
     return this.model.paginate({ _destroy: false, ...filterQuery }, { select: '-_destroy', ...options, sort: sort })
   }

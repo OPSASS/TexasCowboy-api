@@ -6,7 +6,7 @@ export class DetailedHistory {
   @Prop({
     type: mongoose.Schema.Types.String
   })
-  name: string
+  key: string
 
   @Prop({
     type: mongoose.Schema.Types.Number

@@ -1,6 +1,7 @@
 import { AbstractDocument } from '@app/common'
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
 import mongoose from 'mongoose'
+import * as paginate from 'mongoose-paginate-v2'
 
 @Schema({
   versionKey: false,
@@ -23,4 +24,5 @@ export class Wallet extends AbstractDocument {
 }
 
 export const WalletSchema = SchemaFactory.createForClass(Wallet)
+WalletSchema.plugin(paginate)
 WalletSchema.index({ userId: 'text' })

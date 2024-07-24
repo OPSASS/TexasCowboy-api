@@ -28,11 +28,11 @@ export class PokerController {
     return this.PokerService.get(new Types.ObjectId(id))
   }
 
-  @Post('bets')
+  @Post('betting')
   @UseGuards(AuthGuard())
   @UseInterceptors(NotFoundInterceptor)
-  async betPoker(@Body() request: CreateHistoryRequest) {
-    return this.PokerService.bets(request)
+  async pokerBetting(@Body() request: CreateHistoryRequest) {
+    return this.PokerService.betting(request)
   }
 
   @Post('find')

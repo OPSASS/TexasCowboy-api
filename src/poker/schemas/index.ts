@@ -1,6 +1,7 @@
 import { AbstractDocument } from '@app/common'
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
 import mongoose from 'mongoose'
+import * as paginate from 'mongoose-paginate-v2'
 
 @Schema({
   versionKey: false,
@@ -45,3 +46,4 @@ export class Poker extends AbstractDocument {
 }
 
 export const PokerSchema = SchemaFactory.createForClass(Poker)
+PokerSchema.plugin(paginate)

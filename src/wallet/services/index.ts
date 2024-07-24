@@ -51,7 +51,7 @@ export class WalletService {
     if (filterQuery.search) {
       query.$text = { $search: filterQuery.search }
     }
-    return this.repository.find(query, options)
+    return this.repository.findAll(query, options)
   }
 
   /**
@@ -83,7 +83,7 @@ export class WalletService {
       if (!wallet) {
         throw new NotFoundException('Không tìm thấy ví')
       }
-      wallet.coin += coin
+      if (coin !== 0) wallet.coin += coin
 
       return await this.repository.findByIdAndUpdate(wallet._id, wallet)
     } catch (error) {

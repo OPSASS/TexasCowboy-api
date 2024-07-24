@@ -55,7 +55,7 @@ export class UsersService {
     if (filterQuery.search) {
       query.$text = { $search: filterQuery.search }
     }
-    return this.repository.find(query, {
+    return this.repository.findAll(query, {
       ...options,
       select: '-password'
     })

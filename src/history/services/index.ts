@@ -40,7 +40,7 @@ export class HistoryService {
     if (filterQuery.search) {
       query.$text = { $search: filterQuery.search }
     }
-    return this.repository.find(query, options)
+    return this.repository.findAll(query, options)
   }
 
   /**

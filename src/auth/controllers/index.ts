@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
-import { Request } from 'express'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Types } from 'mongoose'
 import { CreateUserRequest } from 'src/users/dto/create.request'
 import { AuthDto } from '../dto/auth.dto'
 import { AuthService } from '../services'
@@ -19,8 +19,8 @@ export class AuthController {
   }
 
   @Get('logout')
-  logout(@Req() req: Request) {
-    this.authService.logout(req.body._id)
+  logout(@Query('id') id: string) {
+    this.authService.logout(new Types.ObjectId(id))
   }
 
   @Get('refresh-token')

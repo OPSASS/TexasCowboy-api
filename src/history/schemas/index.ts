@@ -1,6 +1,7 @@
 import { AbstractDocument } from '@app/common'
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
 import mongoose from 'mongoose'
+import * as paginate from 'mongoose-paginate-v2'
 import { ModalEnum } from '../../../libs/common/src/constants/enum'
 import { DetailedHistory } from './detailedHistory.schema'
 import { GameHistory } from './gameHistory.schema'
@@ -45,4 +46,5 @@ export class History extends AbstractDocument {
 }
 
 export const HistorySchema = SchemaFactory.createForClass(History)
+HistorySchema.plugin(paginate)
 HistorySchema.index({ userId: 'text', history: 'text' })

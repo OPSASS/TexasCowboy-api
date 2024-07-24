@@ -41,31 +41,6 @@ export class PokerService {
   }
 
   /**
-   * Create bet function
-   *
-   * @param request
-   * @returns Created bet information
-   */
-  async bets(request): Promise<History> {
-    const { userId, gameId, detailedHistory } = request
-    const userWallet = await this.walletSevice.getWalletByUserId(userId)
-
-    const totalCoin = detailedHistory.reduce((t, c) => t + c.coin, 0)
-
-    if (userWallet.coin <= 0) throw new NotFoundException('Xu không đủ')
-    await this.walletSevice.addCoin({ userId, coin: totalCoin * -1 })
-
-    const oldHistory = await this.historySevice.getList({ userId, gameId })
-
-    if (!oldHistory[0]) return await this.historySevice.create({ ...request, totalCoin })
-    else
-      return await this.historySevice.update(oldHistory[0]._id, {
-        ...request,
-        totalCoin: oldHistory[0].totalCoin + totalCoin
-      })
-  }
-
-  /**
    * Update function
    *
    * @param request
@@ -92,7 +67,7 @@ export class PokerService {
       const oldTurn = await this.historySevice.findPrevData({ _destroy: false, gameModal: ModalEnum.TEXAS_COWBOY })
 
       gameHistory = {
-        playerHistory: await this.modifyArray(oldTurn?.gameHistory?.playerHistory, result.playerHistory, 50),
+        playerHistory: await this.modifyArray(oldTurn?.gameHistory?.playerHistory, result?.playerHistory, 50),
         result: result.result,
         red: await this.modifyArray(oldTurn?.gameHistory?.red, result.red, 12),
         draw: await this.modifyArray(oldTurn?.gameHistory?.draw, result.draw, 12),
@@ -473,17 +448,67 @@ export class PokerService {
     }
     return 0
   }
+
   /**
-   * Rollback function
+   * Create bet function
    *
    * @param request
-   * @returns Rollback coin
+   * @returns Created bet information
    */
-  async rollback(request): Promise<History> {
-    const { userId, gameId, totalCoin, detailedHistory } = request
-    //TODO Rollback
+  async betting(request): Promise<History> {
+    const { userId, gameId, detailedHistory } = request
+    let total = 0
+    let indexTable = [
+      { key: 'red', value: 2 },
+      { key: 'draw', value: 20 },
+      { key: 'blue', value: 2 },
+      { key: 'highCardOrOnePair', value: 2.2 },
+      { key: 'twoPair', value: 3.1 },
+      { key: 'threeOfAKindOrStraightOrFlush', value: 4.7 },
+      { key: 'fullHouse', value: 20 },
+      { key: 'fourOfAKindOrStraightFlushOrRoyalFlush', value: 240 },
+      { key: 'isHasPair', value: 8.5 },
+      { key: 'isAA', value: 100 },
+      { key: 'isFlush', value: 1.66 }
+    ]
 
-    return
+    const gameDetail = await this.historySevice.getList({ gameId })
+
+    if (gameDetail?.docs?.[0]) {
+      const calculateTotalCoins = (indexTable, inputData, resultObject) => {
+        const indexMap = new Map(indexTable.map((item) => [item.key, item.value]))
+
+        let totalCoins = 0
+        let totalBetting = 0
+
+        inputData.forEach(({ key, coin }) => {
+          const resultCount = resultObject[`count${key.charAt(0).toUpperCase() + key.slice(1)}`]
+          totalBetting += coin
+          if (resultCount === 0) {
+            const indexValue = indexMap.get(key)
+            if (indexValue !== undefined) {
+              totalCoins += (indexValue as number) * coin
+            }
+          }
+        })
+
+        return totalCoins - totalBetting
+      }
+
+      if (detailedHistory.length) {
+        total = calculateTotalCoins(indexTable, detailedHistory, gameDetail.docs?.[0].gameHistory)
+
+        await this.walletSevice.addCoin({ userId, coin: total })
+        return await this.historySevice.create({
+          userId,
+          gameId,
+          totalCoin: total,
+          detailedHistory,
+          gameModal: ModalEnum.BET
+        })
+      }
+    }
+    return undefined
   }
 
   /**
@@ -508,7 +533,7 @@ export class PokerService {
     if (filterQuery.search) {
       query.$text = { $search: filterQuery.search }
     }
-    return this.repository.find(query, options)
+    return this.repository.findAll(query, options)
   }
 
   /**
