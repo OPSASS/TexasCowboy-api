@@ -26,7 +26,7 @@ export class PokerService {
     const player1 = await this.getRandomNumbersFromArray(initCard, 1)
     const player2 = await this.getRandomNumbersFromArray(player1.arr, 1)
 
-    const history = await this.historySevice.create({ gameModal: ModalEnum.TEXAS_COWBOY })
+    const history = await this.historySevice.create({ targetModel: ModalEnum.TEXAS_COWBOY })
 
     const result = await this.repository.create({
       dealer: initPlayerCards,
@@ -64,7 +64,7 @@ export class PokerService {
       const player2Cards = await this.updateArray(turnDetail.player2, player2.result)
 
       const result = await this.gamePlay(dealer.result, [player1Cards, player2Cards])
-      const oldTurn = await this.historySevice.findPrevData({ _destroy: false, gameModal: ModalEnum.TEXAS_COWBOY })
+      const oldTurn = await this.historySevice.findPrevData({ _destroy: false, targetModel: ModalEnum.TEXAS_COWBOY })
 
       gameHistory = {
         playerHistory: await this.modifyArray(oldTurn?.gameHistory?.playerHistory, result?.playerHistory, 50),
@@ -504,7 +504,7 @@ export class PokerService {
           gameId,
           totalCoin: total,
           detailedHistory,
-          gameModal: ModalEnum.BET
+          targetModel: ModalEnum.BET
         })
       }
     }

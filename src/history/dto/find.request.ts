@@ -22,7 +22,7 @@ class FilterQuery {
 
   @IsString()
   @IsOptional()
-  gameModal?: string
+  targetModel?: string
 }
 
 export class FindAllHistoryRequest {

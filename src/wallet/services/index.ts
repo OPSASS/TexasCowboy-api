@@ -1,5 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { ClientSession } from 'mongoose'
+import { History } from 'src/history/schemas'
+import { HistoryService } from 'src/history/services'
 import { CreateWalletRequest } from '../dto/create.request'
 import { UpdateWalletRequest } from '../dto/update.request'
 import { WalletRepository } from '../repositories'
@@ -7,7 +9,10 @@ import { Wallet } from '../schemas'
 
 @Injectable()
 export class WalletService {
-  constructor(private readonly repository: WalletRepository) {}
+  constructor(
+    private readonly repository: WalletRepository,
+    private readonly historySevice: HistoryService
+  ) {}
 
   /**
    * Create function
@@ -75,8 +80,9 @@ export class WalletService {
     }
   }
 
-  async addCoin(request: UpdateWalletRequest): Promise<Wallet> {
+  async addCoin(request: UpdateWalletRequest): Promise<History> {
     const { userId, coin } = request
+
     try {
       const wallet = await this.repository.get({ userId })
 
@@ -87,7 +93,7 @@ export class WalletService {
 
       return await this.repository.findByIdAndUpdate(wallet._id, wallet)
     } catch (error) {
-      throw new NotFoundException('Không tìm thấy ví')
+      throw new NotFoundException('Có lỗi sảy ra')
     }
   }
   /**

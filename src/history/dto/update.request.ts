@@ -30,7 +30,7 @@ export class UpdateHistoryRequest {
 
   @IsString()
   @IsOptional()
-  gameModal?: string
+  targetModel?: string
 
   @IsString()
   @IsOptional()

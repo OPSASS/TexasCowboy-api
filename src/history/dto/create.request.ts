@@ -42,5 +42,5 @@ export class CreateHistoryRequest {
 
   @IsString()
   @IsOptional()
-  gameModal?: string
+  targetModel?: string
 }

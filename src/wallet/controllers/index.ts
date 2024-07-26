@@ -40,12 +40,6 @@ export class WalletController {
     }
   }
 
-  @Post('add-coin')
-  @UseGuards(AuthGuard())
-  async addCoin(@Body() request: UpdateWalletRequest) {
-    return this.walletService.addCoin(request)
-  }
-
   @Get(':id')
   async getWallet(@Param('id') id: string) {
     return this.walletService.get(new Types.ObjectId(id))

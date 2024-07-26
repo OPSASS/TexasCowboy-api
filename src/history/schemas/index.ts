@@ -23,7 +23,7 @@ export class History extends AbstractDocument {
     default: ModalEnum.TEXAS_COWBOY,
     enum: ModalEnum
   })
-  gameModal?: string
+  targetModel?: string
 
   @Prop({
     type: mongoose.Schema.Types.String
