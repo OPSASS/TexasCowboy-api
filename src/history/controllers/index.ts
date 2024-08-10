@@ -46,6 +46,7 @@ export class HistoryController {
   }
 
   @Post('find')
+  @UseGuards(AuthGuard())
   @UseInterceptors(NotFoundInterceptor)
   async listHistory(@Body() request: FindAllHistoryRequest) {
     return this.HistoryService.getList(request.filterQuery ? request.filterQuery : {}, request.options)

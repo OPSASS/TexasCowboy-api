@@ -1,3 +1,4 @@
+import { StatusEnum, TransactionTypeEnum } from '@app/common'
 import { IsOptional, IsString } from 'class-validator'
 import { PaginateOptions } from 'mongoose'
 
@@ -12,14 +13,18 @@ class FilterQuery {
 
   @IsOptional()
   @IsString()
-  bankCode: string
+  transactionNo: string
 
   @IsOptional()
   @IsString()
-  codeVNPay: string
+  status: StatusEnum
+
+  @IsOptional()
+  @IsString()
+  type: TransactionTypeEnum
 }
 
-export class FindAllVNPayRequest {
+export class FindAllTransactionRequest {
   @IsOptional()
   filterQuery: FilterQuery
 

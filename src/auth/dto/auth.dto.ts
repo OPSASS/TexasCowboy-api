@@ -5,14 +5,14 @@ export class AuthDto {
   @ApiProperty({
     type: String,
     required: true,
-    description: 'ユーザーのメールアドレス',
+    description: 'User email address',
     example: 'example_email@gmail.com or 055546121'
   })
   @IsDefined()
   @IsString()
   account: string
 
-  @ApiProperty({ type: String, required: true, description: 'ユーザーのパスワード', example: 'Zxcv1234!' })
+  @ApiProperty({ type: String, required: true, description: 'User password', example: 'Zxcv1234!' })
   @IsDefined()
   @IsString()
   password: string

@@ -7,9 +7,7 @@ import { Match } from '../decorations/match.decoration'
 export class CreateUserRequest {
   @ApiProperty({
     type: String,
-    required: true,
-    description: 'ユーザーのフルネーム',
-    example: '山田 太郎'
+    required: true
   })
   @IsString()
   @IsDefined()
@@ -17,9 +15,7 @@ export class CreateUserRequest {
 
   @ApiProperty({
     type: String,
-    required: true,
-    description: '苗字',
-    example: '山田'
+    required: true
   })
   @IsString()
   @IsDefined()
@@ -27,9 +23,7 @@ export class CreateUserRequest {
 
   @ApiProperty({
     type: String,
-    required: true,
-    description: 'ファーストネーム',
-    example: '太郎'
+    required: true
   })
   @IsString()
   @IsDefined()
@@ -39,9 +33,7 @@ export class CreateUserRequest {
     type: String,
     default: GenderEnum.MALE,
     enum: GenderEnum,
-    required: true,
-    description: '性別',
-    example: '男'
+    required: true
   })
   @IsString()
   @IsDefined()
@@ -50,7 +42,6 @@ export class CreateUserRequest {
 
   @ApiProperty({
     type: String,
-    description: 'ユーザーの電話番号',
     example: '0901234567'
   })
   @IsString()
@@ -60,7 +51,6 @@ export class CreateUserRequest {
   @ApiProperty({
     type: String,
     required: true,
-    description: 'ユーザーのメールアドレス',
     example: 'example_email@gmail.com'
   })
   @IsEmail({}, { message: Message.INVALID_EMAIL })
@@ -70,7 +60,6 @@ export class CreateUserRequest {
   @ApiProperty({
     type: String,
     required: true,
-    description: 'ユーザーのパスワード',
     example: 'Zxcv1234!'
   })
   @IsDefined()
@@ -81,7 +70,6 @@ export class CreateUserRequest {
   @ApiProperty({
     type: String,
     required: true,
-    description: 'ユーザーのパスワード確認',
     example: 'Zxcv1234!'
   })
   @Match('password', { message: Message.PASSWORD_NOT_MATCH })
@@ -90,7 +78,6 @@ export class CreateUserRequest {
   @ApiProperty({
     type: String,
     required: false,
-    description: 'ユーザーの生年月日',
     example: new Date(),
     format: 'date',
     default: new Date()
@@ -104,7 +91,6 @@ export class CreateUserRequest {
     required: false,
     default: RoleEnum.USER,
     enum: RoleEnum,
-    description: 'ユーザーの権利 => 0: ユーザー, 1: メンター, 2: 管理者',
     example: RoleEnum.USER
   })
   @IsNumber()
@@ -114,7 +100,6 @@ export class CreateUserRequest {
   @ApiProperty({
     type: Boolean,
     required: false,
-    description: 'アバターのURL',
     example: 'https://sohanews.sohacdn.com/2016/photo-6-1477717938461.jpg'
   })
   @ValidateIf((ob) => ob.isMentor)

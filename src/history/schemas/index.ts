@@ -36,6 +36,11 @@ export class History extends AbstractDocument {
   totalCoin?: number
 
   @Prop({
+    type: mongoose.Schema.Types.Number
+  })
+  oldCoin?: number
+
+  @Prop({
     type: [DetailedHistory],
     default: undefined
   })

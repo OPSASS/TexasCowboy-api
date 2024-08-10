@@ -4,8 +4,8 @@ import { MongooseModule } from '@nestjs/mongoose'
 import { AuthModule } from './auth'
 import { HistoryModule } from './history'
 import { PokerModule } from './poker'
+import { TransactionModule } from './transactions'
 import { UsersModule } from './users'
-import { VNPayModule } from './vnpay'
 
 @Module({
   imports: [
@@ -17,7 +17,7 @@ import { VNPayModule } from './vnpay'
     UsersModule,
     PokerModule,
     HistoryModule,
-    VNPayModule,
+    TransactionModule,
     AuthModule
   ]
 })

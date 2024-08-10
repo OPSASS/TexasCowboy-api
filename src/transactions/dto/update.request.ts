@@ -1,7 +1,7 @@
-import { VNPayResponseCodeEnum } from '@app/common'
+import { StatusEnum, VNpayResponseCodeEnum } from '@app/common'
 import { IsOptional, IsString } from 'class-validator'
 
-export class UpdateVNPayRequest {
+export class UpdateTransactionRequest {
   @IsOptional()
   @IsString()
   vnp_Amount: string
@@ -28,11 +28,11 @@ export class UpdateVNPayRequest {
 
   @IsOptional()
   @IsString()
-  vnp_ResponseCode: VNPayResponseCodeEnum
+  vnp_ResponseCode: VNpayResponseCodeEnum
 
   @IsOptional()
   @IsString()
-  codeVNPay: string
+  codeTransaction: string
 
   @IsOptional()
   @IsString()
@@ -56,9 +56,9 @@ export class UpdateVNPayRequest {
 
   @IsOptional()
   @IsString()
-  userId?: string
+  transactionNo?: string
 
   @IsOptional()
   @IsString()
-  coin?: number
+  status: StatusEnum
 }

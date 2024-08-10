@@ -54,10 +54,9 @@ export enum Action {
   DELETE = 'delete'
 }
 
-export enum PaymentEnum {
-  PENDING = 'PENDING',
-  SUCCESS = 'SUCCESS',
-  FAIL = 'FAIL'
+export enum TransactionTypeEnum {
+  VNPAY = 'VNPay',
+  PAYPAL = 'PayPal'
 }
 
 export enum TransactionEnum {
@@ -67,7 +66,7 @@ export enum TransactionEnum {
   CANCEL = 'CANCEL'
 }
 
-export enum VNPayResponseCodeEnum {
+export enum VNpayResponseCodeEnum {
   SUCCESS = '00', // Giao dịch thành công
   FAIL = '01',
   PENDING = '07', // Trừ tiền thành công. Giao dịch bị nghi ngờ (liên quan tới lừa đảo, giao dịch bất thường).

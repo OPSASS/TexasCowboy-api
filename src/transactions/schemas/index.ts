@@ -1,10 +1,10 @@
-import { AbstractDocument, ModalEnum, toJSON, TransactionEnum } from '@app/common'
+import { AbstractDocument, ModalEnum, toJSON, TransactionEnum, TransactionTypeEnum } from '@app/common'
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
 import mongoose from 'mongoose'
 import * as paginate from 'mongoose-paginate-v2'
 
 @Schema({ versionKey: false, timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } })
-export class VNPay extends AbstractDocument {
+export class Transaction extends AbstractDocument {
   @Prop({
     type: mongoose.Schema.Types.String
   })
@@ -18,7 +18,12 @@ export class VNPay extends AbstractDocument {
   @Prop({
     type: mongoose.Schema.Types.String
   })
-  codeVNPay: string
+  transactionNo?: string
+
+  @Prop({
+    type: mongoose.Schema.Types.String
+  })
+  codeTransaction: string
 
   @Prop({
     type: mongoose.Schema.Types.String,
@@ -41,8 +46,13 @@ export class VNPay extends AbstractDocument {
     type: mongoose.Schema.Types.String
   })
   targetModel?: ModalEnum
+
+  @Prop({
+    type: mongoose.Schema.Types.String
+  })
+  type?: TransactionTypeEnum
 }
 
-export const VNPaySchema = SchemaFactory.createForClass(VNPay)
-VNPaySchema.plugin(paginate)
-VNPaySchema.plugin(toJSON)
+export const TransactionSchema = SchemaFactory.createForClass(Transaction)
+TransactionSchema.plugin(paginate)
+TransactionSchema.plugin(toJSON)

@@ -1,13 +1,12 @@
 export enum Message {
-  // langues japan
-  INVALID_PASSWORD = 'パスワードが正しくありません',
-  INACTIVE_ACCOUNT = 'アカウントが有効になっていません',
-  INVALID_EMAIL = 'メールアドレスの形式が正しくありません',
-  INVALID_PHONE_NUMBER = '電話番号の形式が正しくありません',
-  PASSWORD_NOT_MATCH = 'パスワードが一致しません',
-  PASSWORD_ERROR = 'パスワードには大文字、小文字、数字、特殊文字を含めてください',
-  ACCOUNT_EXISTED = 'メールアドレスまたは電話番号が既に存在します',
-  MAJOR_EXISTED = '科目情報が既に存在します',
-  ACTIVATIONS_CODE_EXISTED = 'アクティベーションコードが既に存在します',
-  EMAIL_NOT_FOUND = 'メールアドレスが見つかりません。メールアドレスを使用してください！'
+  INVALID_PASSWORD = 'The password is incorrect',
+  INACTIVE_ACCOUNT = 'The account is not active',
+  INVALID_EMAIL = 'The email address format is incorrect',
+  INVALID_PHONE_NUMBER = 'The phone number format is incorrect',
+  PASSWORD_NOT_MATCH = 'The passwords do not match',
+  PASSWORD_ERROR = 'The password must include uppercase, lowercase letters, numbers, and special characters',
+  ACCOUNT_EXISTED = 'The email address or phone number already exists',
+  MAJOR_EXISTED = 'The subject information already exists',
+  ACTIVATION_CODE_EXISTED = 'The activation code already exists',
+  EMAIL_NOT_FOUND = 'Email address not found. Please use a valid email address!'
 }

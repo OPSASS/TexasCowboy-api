@@ -475,7 +475,11 @@ export class PokerService {
     const gameDetail = await this.historySevice.getList({ gameId })
 
     if (gameDetail?.docs?.[0]) {
-      const calculateTotalCoins = (indexTable, inputData, resultObject) => {
+      const calculateTotalCoins = (
+        indexTable: { key: string; value: number }[],
+        inputData: any[],
+        resultObject: any
+      ): any => {
         const indexMap = new Map(indexTable.map((item) => [item.key, item.value]))
 
         let totalCoins = 0
@@ -497,12 +501,13 @@ export class PokerService {
 
       if (detailedHistory.length) {
         total = calculateTotalCoins(indexTable, detailedHistory, gameDetail.docs?.[0].gameHistory)
-
+        const wallet = await this.walletSevice.getWalletByUserId(userId)
         await this.walletSevice.addCoin({ userId, coin: total })
         return await this.historySevice.create({
           userId,
           gameId,
-          totalCoin: total,
+          totalCoin: Number(total.toFixed(0)),
+          oldCoin: wallet.coin,
           detailedHistory,
           targetModel: ModalEnum.BET
         })

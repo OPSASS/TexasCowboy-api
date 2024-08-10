@@ -1,4 +1,4 @@
-import { TransactionEnum, VNPayResponseCodeEnum } from '@app/common'
+import { StatusEnum, TransactionEnum, VNpayResponseCodeEnum } from '@app/common'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import * as crypto from 'crypto'
 import * as moment from 'moment'
@@ -7,29 +7,40 @@ import * as querystring from 'qs'
 import { Buffer } from 'safe-buffer'
 import { History } from 'src/history/schemas'
 import { WalletService } from 'src/wallet/services'
-import { CreateVNPayRequest } from '../dto/create.request'
-import { UpdateVNPayRequest } from '../dto/update.request'
-import { VNPayRepository } from '../repositories'
+import { CreateTransactionRequest } from '../dto/create.request'
+import { UpdateTransactionRequest } from '../dto/update.request'
+import { TransactionRepository } from '../repositories'
+import { Transaction } from '../schemas'
 
 @Injectable()
-export class VNPayService {
+export class TransactionService {
   constructor(
-    private readonly repository: VNPayRepository,
+    private readonly repository: TransactionRepository,
     private readonly walletSevice: WalletService
   ) {}
-  async createCheckout(request: CreateVNPayRequest, ip: string): Promise<{ url: string }> {
-    const codeVNPay = this.makeOrderCode(10)
+
+  /**
+   * Create function
+   *
+   * @param request
+   * @param ip
+   * @returns url
+   */
+  async createCheckout(request: CreateTransactionRequest, ip: string): Promise<{ url: string }> {
+    const codeTransaction = this.makeOrderCode(10)
+
     const session: ClientSession = await this.repository.startTransaction()
     try {
-      const vnp_Url: string = await this.createUrlVnPay(codeVNPay, request.coin, ip)
+      const vnp_Url: string = await this.createUrlVnPay(codeTransaction, request.coin, ip)
 
       await this.repository.create({
         userId: request.userId,
-        codeVNPay: codeVNPay,
+        codeTransaction,
         coin: request.coin,
         status: TransactionEnum.PENDING,
         ipAddress: ip,
-        targetModel: request.targetModel
+        targetModel: request.targetModel,
+        type: request.type
       })
       await session.commitTransaction()
       return {
@@ -37,8 +48,69 @@ export class VNPayService {
       }
     } catch (error) {
       console.log(error)
-      throw new Error('Create vnpay failed')
+      throw new Error('Create transaction failed')
     }
+  }
+
+  /**
+   * Create function
+   *
+   * @param codeTransaction
+   * @param ip
+   * @returns url
+   */
+  async reExecute(codeTransaction: string, ip: string): Promise<{ url: string }> {
+    const session: ClientSession = await this.repository.startTransaction()
+
+    try {
+      const detail = await this.repository.get({ codeTransaction })
+      if (detail.status === StatusEnum.SUCCESS) throw new Error('The transaction has been done')
+      if (detail.status === StatusEnum.CANCEL) throw new Error('The transaction canceled')
+
+      const vnp_Url: string = await this.createUrlVnPay(codeTransaction, detail.coin, ip)
+      await session.commitTransaction()
+      return {
+        url: vnp_Url
+      }
+    } catch (error) {
+      throw new Error('Re execute transaction failed')
+    }
+  }
+
+  /**
+   * Update function
+   *
+   * @param request
+   * @returns Updated document
+   */
+  async update(id: Partial<Transaction>, request: UpdateTransactionRequest): Promise<Transaction> {
+    const session: ClientSession = await this.repository.startTransaction()
+    try {
+      const document = await this.repository.findByIdAndUpdate(id, request)
+      await session.commitTransaction()
+
+      return document
+    } catch (error) {
+      await session.abortTransaction()
+      throw new BadRequestException('Transaction not found')
+    } finally {
+      session.endSession()
+    }
+  }
+
+  /**
+   * Get list function
+   *
+   * @param filterQuery
+   * @param options
+   * @returns List transactions by filter
+   */
+  async getList(filterQuery, options?) {
+    const query = { ...filterQuery }
+    if (filterQuery.search) {
+      query.$text = { $search: filterQuery.search }
+    }
+    return this.repository.findAll(query, options)
   }
 
   /**
@@ -52,12 +124,12 @@ export class VNPayService {
 
   /**
    *
-   * @param codeVNPay
+   * @param codeTransaction
    * @param coin
    * @param ip
    * @returns
    */
-  private async createUrlVnPay(codeVNPay: string, coin: number, ip: string): Promise<string> {
+  private async createUrlVnPay(codeTransaction: string, coin: number, ip: string): Promise<string> {
     let vnp_Params = {}
     vnp_Params['vnp_Command'] = process.env.VNP_COMMAND
     vnp_Params['vnp_CurrCode'] = process.env.VNP_CURR_CODE
@@ -66,8 +138,8 @@ export class VNPayService {
     vnp_Params['vnp_Version'] = process.env.VNP_VERSION
     vnp_Params['vnp_TmnCode'] = process.env.VNP_TMNCODE
     vnp_Params['vnp_ReturnUrl'] = process.env.VNP_RETURN_URL
-    vnp_Params['vnp_TxnRef'] = codeVNPay
-    vnp_Params['vnp_OrderInfo'] = 'Thanh toán đơn hàng ' + codeVNPay
+    vnp_Params['vnp_TxnRef'] = codeTransaction
+    vnp_Params['vnp_OrderInfo'] = 'Order payment ' + codeTransaction
     vnp_Params['vnp_Amount'] = coin * 2500 // 25d/coin
     vnp_Params['vnp_IpAddr'] = ip
     vnp_Params['vnp_CreateDate'] = moment(new Date()).format('YYYYMMDDHHmmss')
@@ -84,7 +156,7 @@ export class VNPayService {
    * @param request
    * @returns
    */
-  async VNPayCallback(request: UpdateVNPayRequest): Promise<History> {
+  async transactionCallback(request: UpdateTransactionRequest): Promise<History> {
     let vnp_Params: any = {}
     vnp_Params['vnp_TmnCode'] = process.env.VNP_TMNCODE
     vnp_Params['vnp_Amount'] = request.vnp_Amount
@@ -105,9 +177,9 @@ export class VNPayService {
     let signed = hmac.update(Buffer.from(signData, 'utf-8') as any).digest('hex')
 
     // check secure hash
-    const detail = await this.repository.get({ codeVNPay: request.vnp_TxnRef })
+    const detail = await this.repository.get({ codeTransaction: request.vnp_TxnRef })
     if (detail && detail.status !== TransactionEnum.SUCCESS)
-      if (secureHash === signed) {
+      if (secureHash === signed && request.vnp_ResponseCode === VNpayResponseCodeEnum.SUCCESS) {
         const coinList = [1000, 3000, 5000, 10000, 15000, 50000, 100000, 500000]
         const body = {
           userId: detail.userId,
@@ -116,8 +188,7 @@ export class VNPayService {
         await this.walletSevice.addCoin(body)
 
         const response = await this.repository.findOneAndUpdate(detail, {
-          status:
-            request.vnp_ResponseCode === VNPayResponseCodeEnum.SUCCESS ? TransactionEnum.SUCCESS : TransactionEnum.FAIL,
+          status: TransactionEnum.SUCCESS,
           responseCode: request.vnp_ResponseCode,
           cardType: request.vnp_CardType,
           bankCode: request.vnp_BankCode,
@@ -126,8 +197,12 @@ export class VNPayService {
         })
 
         return response
+      } else {
+        const response = await this.repository.findOneAndUpdate(detail, {
+          status: TransactionEnum.FAIL
+        })
+        return response
       }
-    throw new BadRequestException('Không tìm thấy đơn hàng')
   }
 
   /**

@@ -18,7 +18,7 @@ export class WalletService {
    * Create function
    *
    * @param request
-   * @returns Created course information
+   * @returns Created wallet information
    */
   async create(request: CreateWalletRequest): Promise<Wallet> {
     return await this.repository.create(request)
@@ -49,7 +49,7 @@ export class WalletService {
    *
    * @param filterQuery
    * @param options
-   * @returns List user by filter
+   * @returns List wallet by filter
    */
   async getList(filterQuery, options?) {
     const query = { ...filterQuery }
@@ -63,7 +63,7 @@ export class WalletService {
    * Update function
    *
    * @param request
-   * @returns Created document
+   * @returns Updated document
    */
   async update(id: Partial<Wallet>, request: UpdateWalletRequest): Promise<Wallet> {
     const session: ClientSession = await this.repository.startTransaction()
