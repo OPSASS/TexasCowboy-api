@@ -1,34 +1,39 @@
-import { Logger } from '@nestjs/common';
 import {
-    ConnectedSocket,
-    MessageBody, OnGatewayConnection,
-    SubscribeMessage,
-    WebSocketGateway,
-    WebSocketServer,
-} from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
+  ConnectedSocket,
+  MessageBody,
+  OnGatewayConnection,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer
+} from '@nestjs/websockets'
+import { Server, Socket } from 'socket.io'
+import { Poker } from 'src/poker/schemas'
 
-@WebSocketGateway({cors: true})
-
+@WebSocketGateway({ cors: true })
 export class SocketGetWay implements OnGatewayConnection {
-    @WebSocketServer()
-    server: Server;
-    // private readonly notificationService: NotificationService
-    private logger: Logger = new Logger('MessageGateway');
+  @WebSocketServer() server: Server
 
-    constructor(
-    ) {}
+  constructor() {}
+  handleConnection(client: Socket) {
+    console.log(`Client connected: ${client.id}`)
+  }
 
-    async handleConnection(client: Socket) {
-        this.logger.log(client.id, 'Connected');
-    }
+  handleDisconnect(client: Socket) {
+    console.log(`Client disconnected: ${client.id}`)
+  }
 
-    @SubscribeMessage('notification')
-    async listenForMessages(
-        @MessageBody() payload: { id: string, status: 'read' | 'unread' },
-        @ConnectedSocket() socket: Socket,
-    ): Promise<void> {
-        const { id, status } = payload;
-        // await this.notificationService.update(id, { status: status });
-    }
+  @SubscribeMessage('pokerGameStart')
+  handlePokerGameStart(@MessageBody() payload: Poker, @ConnectedSocket() client: Socket): void {
+    this.server.emit('pokerGameStart', payload)
+  }
+
+  @SubscribeMessage('pokerGameEnd')
+  handlePokerGameEnd(@MessageBody() payload: Poker, @ConnectedSocket() client: Socket): void {
+    this.server.emit('pokerGameEnd', payload)
+  }
+
+  @SubscribeMessage('historyPokerTurn')
+  handleHistoryPoker(@MessageBody() payload: Poker, @ConnectedSocket() client: Socket): void {
+    this.server.emit('historyPokerTurn', payload)
+  }
 }

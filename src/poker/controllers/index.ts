@@ -1,6 +1,7 @@
 import { NotFoundInterceptor } from '@app/common'
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards, UseInterceptors } from '@nestjs/common'
+import { Body, Controller, Get, Param, Post, UseGuards, UseInterceptors } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
+import { Cron, CronExpression } from '@nestjs/schedule'
 import { Types } from 'mongoose'
 import { CreateHistoryRequest } from 'src/history/dto/create.request'
 import { FindAllPokerRequest } from '../dto/find.request'
@@ -10,17 +11,10 @@ import { PokerService } from '../services'
 export class PokerController {
   constructor(private readonly PokerService: PokerService) {}
 
-  @Post()
-  @UseGuards(AuthGuard())
+  @Cron(CronExpression.EVERY_30_SECONDS)
   @UseInterceptors(NotFoundInterceptor)
   async createPoker() {
     return this.PokerService.create()
-  }
-
-  @Put(':id')
-  @UseGuards(AuthGuard())
-  async updatePoker(@Param('id') id: string) {
-    return this.PokerService.update(new Types.ObjectId(id))
   }
 
   @Get(':id')
@@ -41,9 +35,9 @@ export class PokerController {
     return this.PokerService.getList(request.filterQuery ? request.filterQuery : {}, request.options)
   }
 
-  @Delete(':id')
-  @UseGuards(AuthGuard())
-  async destroyPoker(@Param('id') id: string) {
-    return this.PokerService.destroy(id)
+  @Post('find-now')
+  @UseInterceptors(NotFoundInterceptor)
+  async findNow(@Body() request: FindAllPokerRequest) {
+    return this.PokerService.findNowTurn(request.filterQuery ? request.filterQuery : {})
   }
 }

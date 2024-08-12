@@ -2,6 +2,7 @@ import { ModalEnum } from '@app/common'
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { History } from 'src/history/schemas'
 import { HistoryService } from 'src/history/services'
+import { SocketGetWay } from 'src/socket/service'
 import { WalletService } from '../../wallet/services'
 import { PokerRepository } from '../repositories'
 import { Poker } from '../schemas'
@@ -11,7 +12,8 @@ export class PokerService {
   constructor(
     private readonly repository: PokerRepository,
     private readonly walletSevice: WalletService,
-    private readonly historySevice: HistoryService
+    private readonly historySevice: HistoryService,
+    private readonly socketService: SocketGetWay
   ) {}
 
   /**
@@ -20,6 +22,7 @@ export class PokerService {
    * @returns Created poker information
    */
   async create(): Promise<Poker> {
+    const turnTime = Number(process.env.GAME_TIME)
     let initCard = Array.from({ length: 52 }, (_, k) => k + 1)
     initCard = initCard.sort(() => Math.random() - 0.5)
     let initPlayerCards = [0, 0, 0, 0, 0]
@@ -37,6 +40,15 @@ export class PokerService {
     })
 
     await this.historySevice.update(history._id, { gameId: result._id.toString() })
+    setTimeout(
+      () => {
+        this.update(result._id)
+      },
+      turnTime / 2 + 2700
+    )
+
+    this.socketService.server.sockets.emit('pokerGameStart', result)
+
     return result
   }
 
@@ -118,12 +130,19 @@ export class PokerService {
       const body = {
         dealer: dealer.result,
         player1: player1Cards,
-        player2: player2Cards,
-        pack: []
+        player2: player2Cards
       }
+      const gameDetail = await this.repository.findByIdAndUpdate(id, { ...body, pack: [] })
+      this.socketService.server.sockets.emit('pokerGameEnd', { ...body, _id: gameDetail._id.toString() })
+      const historyTurn = await this.historySevice.update(turnDetail.historyId, { gameHistory })
 
-      await this.historySevice.update(turnDetail.historyId, { gameHistory })
-      return await this.repository.findByIdAndUpdate(id, body)
+      const soketHistoryData = {
+        gameHistory: historyTurn.gameHistory,
+        gameId: historyTurn.gameId
+      }
+      this.socketService.server.sockets.emit('historyPokerTurn', soketHistoryData)
+
+      return gameDetail
     } catch (error) {
       throw new NotFoundException('Turn not found')
     }
@@ -528,5 +547,15 @@ export class PokerService {
    */
   async destroy(id: string): Promise<Poker> {
     return await this.repository.destroy(id)
+  }
+
+  /**
+   * findNowTurn function
+   *
+   * @param request
+   * @returns findNowTurn history information
+   */
+  async findNowTurn(request: any): Promise<History> {
+    return await this.repository.findPrev(request)
   }
 }

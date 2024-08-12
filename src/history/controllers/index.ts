@@ -57,4 +57,10 @@ export class HistoryController {
   async destroyHistory(@Param('id') id: string) {
     return this.HistoryService.destroy(id)
   }
+
+  @Post('find-prev')
+  @UseInterceptors(NotFoundInterceptor)
+  async findNow(@Body() request: FindAllHistoryRequest) {
+    return this.HistoryService.findPrevData(request.filterQuery ? request.filterQuery : {})
+  }
 }
