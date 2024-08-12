@@ -333,8 +333,8 @@ export class PokerService {
       red: data.some((p) => p.playerIndex === 1 && p.result === 'win'),
       draw: data.every((p) => p.result === 'draw'),
       blue: data.some((p) => p.playerIndex === 0 && p.result === 'win'),
-      highCardOrOnePair: data.some((p) => p.rank === 0 || (p.rank === 1 && p.result === 'win')),
-      twoPair: data.some((p) => p.rank === 2),
+      highCardOrOnePair: data.some((p) => (p.rank === 0 || p.rank === 1) && p.result === 'win'),
+      twoPair: data.some((p) => p.rank === 2 && p.result === 'win'),
       threeOfAKindOrStraightOrFlush: data.some(
         (p) => (p.rank === 3 || p.rank === 4 || p.rank === 5) && p.result === 'win'
       ),
