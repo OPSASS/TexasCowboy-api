@@ -64,6 +64,7 @@ export class PokerService {
       const player2Cards = await this.updateArray(turnDetail.player2, player2.result)
 
       const result = await this.gamePlay(dealer.result, [player1Cards, player2Cards])
+
       const oldTurn = await this.historySevice.findPrevData({ _destroy: false, targetModel: ModalEnum.TEXAS_COWBOY })
 
       gameHistory = {
@@ -124,25 +125,17 @@ export class PokerService {
       await this.historySevice.update(turnDetail.historyId, { gameHistory })
       return await this.repository.findByIdAndUpdate(id, body)
     } catch (error) {
-      throw new NotFoundException('Không tìm thấy phiên chơi')
+      throw new NotFoundException('Turn not found')
     }
   }
 
   async gamePlay(dealerCards, players) {
     const getCardValue = (card) => ((card - 1) % 13) + 2
+    const getCardSuit = (card) => ['Hearts', 'Diamonds', 'Clubs', 'Spades'][Math.floor((card - 1) / 13)]
+    const getCard = (card) => ({ value: getCardValue(card), suit: getCardSuit(card) })
 
-    const getCardSuit = (card) => {
-      const suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades']
-      return suits[Math.floor((card - 1) / 13)]
-    }
-
-    const getCard = (card) => ({
-      value: getCardValue(card),
-      suit: getCardSuit(card)
-    })
-
-    const rankToString = (rank) => {
-      const ranks = [
+    const rankToString = (rank) =>
+      [
         'High Card',
         'One Pair',
         'Two Pair',
@@ -153,48 +146,58 @@ export class PokerService {
         'Four of a Kind',
         'Straight Flush',
         'Royal Flush'
-      ]
-      return ranks[rank]
-    }
+      ][rank]
 
     const getKeyByValue = (object, value, secondHighest = false) => {
-      const keys = Object.keys(object)
-      if (secondHighest) {
-        keys.sort((a, b) => object[b] - object[a])
-        return keys[1]
-      }
-      return keys.find((key) => object[key] === value)
+      const keys = Object.keys(object).sort((a, b) => object[b] - object[a])
+      return Number(secondHighest ? keys[1] : keys.find((key) => object[key] === value))
     }
 
     const getHandRank = (cards) => {
       const values = cards.map((card) => card.value).sort((a, b) => a - b)
-      const suits = cards.map((card) => card.suit)
       const uniqueValues = [...new Set(values)]
-      const uniqueSuits = [...new Set(suits)]
-
-      const isFlush = uniqueSuits.length === 1
+      const suits = cards.map((card) => card.suit)
+      const isFlush = new Set(suits).size === 1
       const isStraight = uniqueValues.length === 5 && (values[4] - values[0] === 4 || values.join('') === '234514')
       const valueCounts = values.reduce((acc, value) => {
         acc[value] = (acc[value] || 0) + 1
         return acc
       }, {})
       const counts = Object.values(valueCounts).sort((a: number, b: number) => b - a)
-
       const highestCard = values[4]
       const highestCardSuit = suits[values.indexOf(highestCard)]
 
+      // Royal Flush
       if (isStraight && isFlush && values[0] === 10)
         return { rank: 9, highCard: highestCard, highCardSuit: highestCardSuit }
+
+      // Straight Flush
       if (isStraight && isFlush) return { rank: 8, highCard: highestCard, highCardSuit: highestCardSuit }
+
+      // Four of a Kind
       if (counts[0] === 4) return { rank: 7, highCard: getKeyByValue(valueCounts, 4), highCardSuit: highestCardSuit }
+
+      // Full House
       if (counts[0] === 3 && counts[1] === 2)
         return { rank: 6, highCard: getKeyByValue(valueCounts, 3), highCardSuit: highestCardSuit }
+
+      // Flush
       if (isFlush) return { rank: 5, highCard: highestCard, highCardSuit: highestCardSuit }
+
+      // Straight
       if (isStraight) return { rank: 4, highCard: highestCard, highCardSuit: highestCardSuit }
+
+      // Three of a Kind
       if (counts[0] === 3) return { rank: 3, highCard: getKeyByValue(valueCounts, 3), highCardSuit: highestCardSuit }
+
+      // Two Pair
       if (counts[0] === 2 && counts[1] === 2)
         return { rank: 2, highCard: getKeyByValue(valueCounts, 2, true), highCardSuit: highestCardSuit }
+
+      // One Pair
       if (counts[0] === 2) return { rank: 1, highCard: getKeyByValue(valueCounts, 2), highCardSuit: highestCardSuit }
+
+      // Default High Card
       return { rank: 0, highCard: highestCard, highCardSuit: highestCardSuit }
     }
 
@@ -203,169 +206,145 @@ export class PokerService {
       if (k === arr.length) return [arr]
       if (k === 1) return arr.map((e) => [e])
 
-      let combs = []
-      let tailCombs = []
-
-      for (let i = 0; i <= arr.length - k; i++) {
-        tailCombs = getCombinations(arr.slice(i + 1), k - 1)
-        for (let j = 0; j < tailCombs.length; j++) {
-          combs.push([arr[i], ...tailCombs[j]])
-        }
-      }
-
-      return combs
+      return arr.flatMap((e, i) => getCombinations(arr.slice(i + 1), k - 1).map((comb) => [e, ...comb]))
     }
 
-    const getBestHandRank = (hand) => {
-      const combinations = getCombinations(hand, 5)
-      return combinations.reduce(
+    const getBestHandRank = (hand) =>
+      getCombinations(hand, 5).reduce(
         (best, current) => {
           const currentRank = getHandRank(current)
-          if (
-            currentRank.rank > best.rank ||
+          return currentRank.rank > best.rank ||
             (currentRank.rank === best.rank && currentRank.highCard > best.highCard) ||
             (currentRank.rank === best.rank &&
               currentRank.highCard === best.highCard &&
-              currentRank.highCardSuit > best.highCardSuit)
-          ) {
-            return currentRank
-          }
-          return best
+              currentRank.highCardSuit !== best.highCardSuit)
+            ? currentRank
+            : best
         },
-        { rank: -1, highCard: -1, highCardSuit: '' }
+        { rank: -1, highCard: -1 }
       )
-    }
 
-    const hasPair = (hand) => {
-      const values = hand.map((card) => getCardValue(card))
-      const valueCounts = values.reduce((acc, value) => {
-        acc[value] = (acc[value] || 0) + 1
-        return acc
-      }, {})
-      return Object.values(valueCounts).some((count) => count === 2)
-    }
+    const hasPair = (hand) =>
+      Object.values(
+        hand.reduce((acc, card) => {
+          const value = getCardValue(card)
+          acc[value] = (acc[value] || 0) + 1
+          return acc
+        }, {})
+      ).some((count) => count === 2)
 
     const checkPairs = (players) => {
       let isHasPair = false
-      let AA = false
+      let isAA = false
 
       players.forEach((hand) => {
-        const handValues = hand.map((card) => getCardValue(card))
-        const valueCounts = handValues.reduce((acc, value) => {
+        const valueCounts = hand.reduce((acc, card) => {
+          const value = getCardValue(card)
           acc[value] = (acc[value] || 0) + 1
           return acc
         }, {})
         if (hasPair(hand)) isHasPair = true
-        if (valueCounts[14] === 2) AA = true
+        if (valueCounts[14] === 2) isAA = true
       })
 
-      return { isHasPair, isAA: AA }
+      return { isHasPair, isAA }
     }
-
-    const hasFlush = (hand) => {
-      const suits = hand.map(getCard).map((card) => card.suit)
-      const uniqueSuits = [...new Set(suits)]
-      return uniqueSuits.length === 1
-    }
-
-    const hasStraight = (hand) => {
-      const values = hand
-        .map(getCard)
-        .map((card) => card.value)
-        .sort((a, b) => a - b)
-      for (let i = 1; i < values.length; i++) {
-        if (values[i] !== values[i - 1] + 1) return false
-      }
-      return true
-    }
-
-    const hasStraightFlush = (hand) => hasFlush(hand) && hasStraight(hand)
 
     const checkHands = (dealerCards, players) => {
       const allHands = [dealerCards, ...players]
-      let pairInGame = checkPairs(players)
-      let isFlush = false
-      let isStraight = false
-      let isStraightFlush = false
+      const { isHasPair, isAA } = checkPairs(players)
+      return {
+        isHasPair,
+        isAA,
+        isFlush: allHands.some((hand) => new Set(hand.map(getCard).map((card) => card.suit)).size === 1),
+        isStraight: allHands.some((hand) => {
+          const values = hand
+            .map(getCard)
+            .map((card) => card.value)
+            .sort((a, b) => a - b)
+          return values.length === 5 && (values[4] - values[0] === 4 || values.join('') === '234514')
+        }),
+        isStraightFlush: allHands.some((hand) => {
+          const values = hand
+            .map(getCard)
+            .map((card) => card.value)
+            .sort((a, b) => a - b)
+          const suits = hand.map(getCard).map((card) => card.suit)
+          return (
+            new Set(suits).size === 1 &&
+            values.length === 5 &&
+            (values[4] - values[0] === 4 || values.join('') === '234514')
+          )
+        })
+      }
+    }
 
-      allHands.forEach((hand) => {
-        if (hasFlush(hand)) isFlush = true
-        if (hasStraight(hand)) isStraight = true
-        if (hasStraightFlush(hand)) isStraightFlush = true
-      })
-
-      return { ...pairInGame, isFlush, isStraight, isStraightFlush }
+    const compareHands = (players) => {
+      const [player1Cards, player2Cards] = players.map((hand) => hand.map(getCardValue).sort((a, b) => a - b))
+      for (let i = 0; i < player1Cards.length; i++) {
+        if (player1Cards[i] > player2Cards[i]) return 0
+        if (player1Cards[i] < player2Cards[i]) return 1
+      }
+      return -1
     }
 
     const getWinner = (dealerCards, players) => {
       const dealerHand = dealerCards.map(getCard)
-      const anyPlayers = checkHands(dealerCards, players)
-      let winner = null
-      let highestRank = { rank: -1, highCard: -1, highCardSuit: '' }
-
       const results = players.map((player, index) => {
         const playerHand = [...dealerHand, ...player.map(getCard)]
         const playerRank = getBestHandRank(playerHand)
-
-        if (
-          playerRank.rank > highestRank.rank ||
-          (playerRank.rank === highestRank.rank && playerRank.highCard > highestRank.highCard) ||
-          (playerRank.rank === highestRank.rank &&
-            playerRank.highCard === highestRank.highCard &&
-            playerRank.highCardSuit > highestRank.highCardSuit)
-        ) {
-          highestRank = playerRank
-          winner = index
-        }
-
         return {
           playerIndex: index,
           rank: playerRank.rank,
-          rankString: rankToString(playerRank.rank)
+          rankString: rankToString(playerRank.rank),
+          highCard: playerRank.highCard
         }
       })
 
-      let playersResult = results.map((result, index) => {
-        if (winner === -1) {
-          return { ...result, result: 'draw' }
-        } else if (index === winner) {
-          return { ...result, result: 'win' }
-        } else {
-          return { ...result, result: 'lose' }
-        }
-      })
+      const highestRank = results.reduce(
+        (best, result) =>
+          result.rank > best.rank || (result.rank === best.rank && result.highCard > best.highCard) ? result : best,
+        { rank: -1, highCard: -1 }
+      )
 
-      return { anyPlayers, players: playersResult }
+      const isDraw =
+        results.every((result) => result.rank === highestRank.rank && result.highCard === highestRank.highCard) &&
+        compareHands(players) === -1
+
+      const winner = results.findIndex(
+        (result) => result.rank === highestRank.rank && result.highCard === highestRank.highCard
+      )
+
+      return {
+        anyPlayers: checkHands(dealerCards, players),
+        players: results.map((result) => ({
+          ...result,
+          result: isDraw ? 'draw' : result.playerIndex === winner ? 'win' : 'lose'
+        }))
+      }
     }
 
     const result = getWinner(dealerCards, players)
     const data = result.players
-    const red = data.some((p) => p.playerIndex === 1 && p.result === 'win')
-    const draw = data.every((p) => p.result === 'draw')
-    const blue = data.some((p) => p.playerIndex === 0 && p.result === 'win')
-    const highCardOrOnePair = data.some((p) => (p.rank === 0 || p.rank === 1) && p.result === 'win')
-    const twoPair = data.some((p) => p.rank === 2)
-    const threeOfAKindOrStraightOrFlush = data.some((p) => p.rank === 3 || p.rank === 4 || p.rank === 5)
-    const fullHouse = data.some((p) => p.rank === 6)
-    const fourOfAKindOrStraightFlushOrRoyalFlush = data.some((p) => p.rank === 7 || p.rank === 8 || p.rank === 9)
-    const isHasPair = result.anyPlayers.isHasPair
-    const isAA = result.anyPlayers.isAA
-    const isFlush = result.anyPlayers.isFlush || result.anyPlayers.isStraight || result.anyPlayers.isStraightFlush
 
     const gameHistory = {
-      playerHistory: data.filter((p) => p.result === 'win'),
-      result: result.players,
-      red,
-      draw,
-      blue,
-      highCardOrOnePair,
-      twoPair,
-      threeOfAKindOrStraightOrFlush,
-      fullHouse,
-      fourOfAKindOrStraightFlushOrRoyalFlush,
-      isAA,
-      isHasPair,
-      isFlush
+      playerHistory: data.filter((p, id) => p.result === 'win' || (p.result === 'draw' && id === 0)),
+      result: data,
+      red: data.some((p) => p.playerIndex === 1 && p.result === 'win'),
+      draw: data.every((p) => p.result === 'draw'),
+      blue: data.some((p) => p.playerIndex === 0 && p.result === 'win'),
+      highCardOrOnePair: data.some((p) => p.rank === 0 || (p.rank === 1 && p.result === 'win')),
+      twoPair: data.some((p) => p.rank === 2),
+      threeOfAKindOrStraightOrFlush: data.some(
+        (p) => (p.rank === 3 || p.rank === 4 || p.rank === 5) && p.result === 'win'
+      ),
+      fullHouse: data.some((p) => p.rank === 6 && p.result === 'win'),
+      fourOfAKindOrStraightFlushOrRoyalFlush: data.some(
+        (p) => (p.rank === 7 || p.rank === 8 || p.rank === 9) && p.result === 'win'
+      ),
+      isFlush: result.anyPlayers.isFlush,
+      isHasPair: result.anyPlayers.isHasPair,
+      isAA: result.anyPlayers.isAA
     }
 
     return gameHistory
@@ -460,7 +439,7 @@ export class PokerService {
     let total = 0
     let indexTable = [
       { key: 'red', value: 2 },
-      { key: 'draw', value: 20 },
+      { key: 'draw', value: 2 },
       { key: 'blue', value: 2 },
       { key: 'highCardOrOnePair', value: 2.2 },
       { key: 'twoPair', value: 3.1 },
@@ -496,7 +475,7 @@ export class PokerService {
           }
         })
 
-        return totalCoins - totalBetting
+        return Number((totalCoins - totalBetting).toFixed(0))
       }
 
       if (detailedHistory.length) {
@@ -506,7 +485,7 @@ export class PokerService {
         return await this.historySevice.create({
           userId,
           gameId,
-          totalCoin: Number(total.toFixed(0)),
+          totalCoin: total,
           oldCoin: wallet.coin,
           detailedHistory,
           targetModel: ModalEnum.BET
