@@ -26,7 +26,7 @@ export class UsersService {
       throw new ForbiddenException('Password and Confirm Password must be the same')
 
     const result = await this.repository.create({ ...request, password: await bcrypt.hash(request.password, 12) })
-    const wallet = await this.walletSevice.create({ userId: result._id.toString() })
+    const wallet = await this.walletSevice.create({ userId: result._id.toString(), coin: 5000 })
 
     return await this.update(result._id, { walletId: wallet._id.toString() })
   }
