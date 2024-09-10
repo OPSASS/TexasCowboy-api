@@ -7,14 +7,10 @@ class FilterQuery {
 
   @IsString()
   @IsOptional()
-  gameId?: string
-
-  @IsString()
-  @IsOptional()
   targetModel?: string
 }
 
-export class FindAllHistoryRequest {
+export class FindAllRankingRequest {
   @IsOptional()
   filterQuery: FilterQuery
 

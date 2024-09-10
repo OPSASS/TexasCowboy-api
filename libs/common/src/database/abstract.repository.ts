@@ -209,4 +209,60 @@ export abstract class AbstractRepository<TDocument extends AbstractDocument> {
 
     return session
   }
+
+  async sum(field: string, filter: Record<string, any> = {}): Promise<number> {
+    const result = await this.model.aggregate([
+      { $match: filter },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: `$${field}` }
+        }
+      }
+    ])
+    return result[0]?.total || 0
+  }
+
+  async count(filter: Record<string, any> = {}): Promise<number> {
+    return this.model.countDocuments(filter).exec()
+  }
+
+  async avg(field: string, filter: Record<string, any> = {}): Promise<number> {
+    const result = await this.model.aggregate([
+      { $match: filter },
+      {
+        $group: {
+          _id: null,
+          average: { $avg: `$${field}` }
+        }
+      }
+    ])
+    return result[0]?.average || 0
+  }
+
+  async max(field: string, filter: Record<string, any> = {}): Promise<number> {
+    const result = await this.model.aggregate([
+      { $match: filter },
+      {
+        $group: {
+          _id: null,
+          maxValue: { $max: `$${field}` }
+        }
+      }
+    ])
+    return result[0]?.maxValue || 0
+  }
+
+  async min(field: string, filter: Record<string, any> = {}): Promise<number> {
+    const result = await this.model.aggregate([
+      { $match: filter },
+      {
+        $group: {
+          _id: null,
+          minValue: { $min: `$${field}` }
+        }
+      }
+    ])
+    return result[0]?.minValue || 0
+  }
 }

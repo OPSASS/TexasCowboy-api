@@ -4,6 +4,7 @@ import { MongooseModule } from '@nestjs/mongoose'
 import { AuthModule } from './auth'
 import { HistoryModule } from './history'
 import { PokerModule } from './poker'
+import { RankingModule } from './ranking'
 import { SocketModule } from './socket'
 import { TransactionModule } from './transactions'
 import { UsersModule } from './users'
@@ -19,6 +20,7 @@ import { UsersModule } from './users'
     PokerModule,
     HistoryModule,
     TransactionModule,
+    RankingModule,
     AuthModule,
     SocketModule
   ]

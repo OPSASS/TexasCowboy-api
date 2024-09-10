@@ -40,7 +40,7 @@ export class WalletService {
    * @param userId
    * @returns Document
    */
-  async getWalletByUserId(userId: Partial<Wallet>): Promise<Wallet> {
+  async getWalletByUserId(userId: string): Promise<Wallet> {
     return await this.repository.get({ userId })
   }
 

@@ -37,6 +37,11 @@ export class GameHistory {
   jackpot?: number
 
   @Prop({
+    type: mongoose.Schema.Types.Number
+  })
+  oldJackpot?: number
+
+  @Prop({
     type: mongoose.Schema.Types.Array
   })
   highCardOrOnePair?: boolean[]
